@@ -9,65 +9,92 @@
 # make hash of image
 # output all of this data
 import Image as im
-import os, sys
+import sys
 import urllib2
 import urllib
 import Utility as utl
-#from bs4 import *
+from bs4 import *
 
 
 class VAB_IQDB:
-        TEMPPASSWORD = '' #ADD PASSWORD HERE.
-        #temp variable for now
-        useECSProxy = True
+    
+    fileNames = sys.argv[1:]
+    
+    md5List = []
+    for filename in fileNames:
+        md5List.append(utl.md5(filename))
+
+    TEMPPASSWORD = '' #ADD PASSWORD HERE.
         
-        #print utl.nameExtension("image.a.gif")
-       
-        proxy = 'www-cache.ecs.vuw.ac.nz'
-        username = 'kotarou'
-        password = TEMPPASSWORD
+    username = 'kotarou'
+    password = TEMPPASSWORD
+    
+    opener = utl.generateOpener(username, password, True)
+    urllib2.install_opener(opener)
+
+    fileToTest = utl.dbuFilename(md5List[0], utl.fileExtension(fileNames[0]))
+
+    if utl.dbuExistsImage(fileToTest):
+        print "scraping dbu"
+        url = "http://danbooru.donmai.us/posts?utf8=%E2%9C%93&tags=md5%3A" + md5List[0]
+        request = urllib2.Request(url)
+        response = urllib2.urlopen(request)
+        html = response.read()
+        soup = BeautifulSoup(html)
+        postID = soup.article['id'][5:]
         
-        opener = None;
+        url = "http://danbooru.donmai.us/posts/" + postID
+        request = urllib2.Request(url)
+        response = urllib2.urlopen(request)
+        html = response.read()
+        soup = BeautifulSoup(html)
+        tagHTML = soup.select('#tag-list')[0]
+        linkList = tagHTML.find_all('li')
 
-        if useECSProxy:
-                password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-                proxies = {"http":"http://%s" % proxy}
+        copyrightHTML = soup.select('.category-3')
+        charactersHTML = soup.select('.category-4')
+        artistHTML = soup.select('.category-1')
+        tagsHTML = soup.select('.category-0')
 
-                proxy_info = {
-                'user' : username,
-                'pass' : password,
-                'host' : proxy,
-                'port' : 8080 
-                }
+        copyrights = []
+        characters = []
+        artists = []
+        tags = []
+        for instance in copyrightHTML:
+            copyrights.append(instance.find_all('a')[1].string)
+        for instance in charactersHTML:
+            characters.append(instance.find_all('a')[1].string)
+        for instance in artistHTML:
+            artists.append(instance.find_all('a')[1].string)
+        for instance in tagsHTML:
+            tags.append(instance.find_all('a')[1].string)
 
-                # build a new opener that uses a proxy requiring authorization
-                proxy_support = urllib2.ProxyHandler({"http" : \
-                "http://%(user)s:%(pass)s@%(host)s:%(port)d" % proxy_info})
-                opener = urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
+        print 'copyrights:' + str(copyrights)
+        print 'characters:' + str(characters)
+        print 'artists:' + str(artists)
+        print 'tags:' + str(tags)
 
-        # install it
-        urllib2.install_opener(opener)
 
-        if utl.dbuExistsImage(imageMD5):
-                 #scrape data from dbu
-        else:
-                url = "http://iqdb.yande.re"
-                values = {}
-                values["url"] = "danbooru.donmai.us/data/d9bec15a23c25bf14fc9d8404a0b31ee.png"
+    else:
+        print "scraping iqdb"
+        url = "http://iqdb.yande.re"
+        values = {}
+        values["url"] = "danbooru.donmai.us/data/d9bec15a23c25bf14fc9d8404a0b31ee.png"
+        #values["filename"] = "/u/students/kotarou/projects/vacbooru/USETOTEST.png"
 
-                data = urllib.urlencode(values)
-                request = urllib2.Request(url + "/" +"?"+ data)
-                response = urllib2.urlopen(request)
-                html = response.read()
-                soup = BeautifulSoup(html)
+        data = urllib.urlencode(values)
+        request = urllib2.Request(url + "/" +"?"+ data)
+        response = urllib2.urlopen(request)
+        html = response.read()
+        soup = BeautifulSoup(html)
 
-                imageSource = soup.div
-                imageSource = str(imageSource)[31:-68].replace("\n", "")
-                
-                imgs = soup.find_all('img')
-                tagList = str(imgs[1])
-                print (imageSource)
-                print tagList
+        imageSource = soup.div
+        imageSource = str(imageSource)[31:-68].replace("\n", "")
+        
+        imgs = soup.find_all('img')
+        tagList = str(imgs[1])
+        print (imageSource)
+        print tagList
 
 
 
