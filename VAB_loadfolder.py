@@ -8,9 +8,13 @@ import re
 # Takes a folder and returns all files that fit either the danbooru standard format, all image files, or all files that fit a regex depending on flags provided
 
 class VAB_loadfolder:
-    def __init__(self):
+
     image_extensions = []
 	debugLevel = 5
+	
+	def __init__(self):
+		pass
+    
     # Gets the file list
     def loadFiles(self, path):
         path_to_file = ""        
