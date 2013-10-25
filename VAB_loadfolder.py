@@ -10,7 +10,7 @@ import re
 class VAB_loadfolder:
     def __init__(self):
     image_extensions = []
-
+	debugLevel = 5
     # Gets the file list
     def loadFiles(self, path):
         path_to_file = ""        
@@ -22,8 +22,7 @@ class VAB_loadfolder:
         elif os.access(path, os.R_OK):       
             path_to_file = args.path
         else:
-            # DEBUG FOLDER NOT FOUND
-            pass
+            debugPrint("Folder not found " + path, debugLevel, 2):
 
         for root, dirs, files in os.walk(path_to_file):
             for name in files:
@@ -54,12 +53,12 @@ class VAB_loadfolder:
         return (([data.split('.')[1] in image_extensions))
 
 
-
-parser = argparse.ArgumentParser(description='Recursively load a folder of images')
-parser.add_argument("path", help="folder to use as a source of images")
-parser.add_argument('--regex', '-r',action="store_true", help="optionally supply a regex and only load files that fit it")
-parser.add_argument('-d',  help="only load images that fit the danbooru naming scheme")
-parser.add_argument('--all', '-a', help="load any file not just one that fits known image file extensions")
-args = parser.parse_args()
-VAB_loadFolder(args)
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser(description='Recursively load a folder of images')
+	parser.add_argument("path", help="folder to use as a source of images")
+	parser.add_argument('--regex', '-r',action="store_true", help="optionally supply a regex and only load files that fit it")
+	parser.add_argument('-d',  help="only load images that fit the danbooru naming scheme")
+	parser.add_argument('--all', '-a', help="load any file not just one that fits known image file extensions")
+	args = parser.parse_args()
+	VAB_loadFolder(args)
 

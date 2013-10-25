@@ -40,3 +40,9 @@ def generateOpener(username, password, useECSProxy = False):
 		return urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
 	else:
 		return None;
+		
+# Prints if the level of debug printing is greater or equal to this methods threshold to be printed
+# typically 0 = never, 1 = standard running, 2-5 = various debug levels
+def debugPrint(message, level, threshold):
+	if (level >= threshold):
+		print(message)
