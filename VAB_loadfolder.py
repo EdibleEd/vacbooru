@@ -8,11 +8,11 @@ import re
 # Takes a folder and returns all files that fit either the danbooru standard format, all image files, or all files that fit a regex depending on flags provided
 
 class VAB_loadfolder:
-    def __init__(name):
+    def __init__(self):
     image_extensions = []
 
     # Gets the file list
-    def loadFiles(path):
+    def loadFiles(self, path):
         path_to_file = ""        
         rel_path = True       
         output_list = []        
@@ -39,18 +39,18 @@ class VAB_loadfolder:
                 else:
                     output_list.append(cullNonImage(os.path.join(root, name)))
 
-        return output_list
+        print(output_list)
             
     # Cull file based on regex
-    def cullRegex(data, regex):
+    def cullRegex(self, data, regex):
         return (re.match(data, regex) != None)
 
     # Cull file to only danbooru style filenames
-    def cullDanbooru(data):
+    def cullDanbooru(self, data):
         return (([data.split('.')[1] in image_extensions) && ((re.match(data.split('.')[0],"[0-9a-f]{64}") != None)))
 
     # Cull non image files (by extension)
-    def cullNonImage(data):
+    def cullNonImage(self, data):
         return (([data.split('.')[1] in image_extensions))
 
 
