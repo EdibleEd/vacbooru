@@ -5,7 +5,7 @@ from urllib2 import URLError
 import urllib
 
 def md5(filepath):
-	return hashlib.md5(open(filepath).read()).hexdigest().lower()
+	return hashlib.md5(open(filepath, 'rb').read()).hexdigest().lower()
 
 def dbuFilename(md5, imageType):
 	return md5 + '.' + imageType
@@ -15,14 +15,15 @@ def fileExtension(filepath):
 	return tokens[-1:][0]
 
 def dbuExistsImage(dbuFile):
-	url = "http://danbooru.donmai.us/data/" + dbuFile
-	request = urllib2.Request(url)
-	try:
-		response = urllib2.urlopen(request)
-		return True
-	except URLError, e:
-		print e.reason
-	return False
+    url = "http://danbooru.donmai.us/data/" + dbuFile
+    request = urllib2.Request(url)
+    try:
+        response = urllib2.urlopen(request)
+        return True
+    except URLError, e:
+        print e     #2.7
+        #print e    #3
+    return False
 
 def generateOpener(username, password, useECSProxy = False):
 	proxy = 'www-cache.ecs.vuw.ac.nz'
