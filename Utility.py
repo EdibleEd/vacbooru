@@ -21,7 +21,8 @@ def dbuExistsImage(dbuFile):
         response = urllib2.urlopen(request)
         return True
     except URLError, e:
-        print e     #2.7
+    	print "Exact image not found on Dbu."
+        #print e     #2.7
         #print e    #3
     return False
 
