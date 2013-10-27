@@ -1,5 +1,15 @@
 import argparse
 import re
+import os
+
+#import Utility
+
+# inlining utility here for py2/3 issues
+# Prints if the level of debug printing is greater or equal to this methods threshold to be printed
+# typically 0 = never, 1 = standard running, 2-5 = various debug levels
+def debugPrint(message, level, threshold):
+	if (level >= threshold):
+		print(message)
 
 # TAKES a directory path
 # OPTIONALLY TAKES a regex OR a flag indicating standard danbooru format, a flag indicating not just image files
@@ -9,11 +19,12 @@ import re
 
 class VAB_loadfolder:
 
-    image_extensions = []
-	debugLevel = 5
-	
-	def __init__(self):
-		pass
+    
+    
+    def __init__(self, args):
+        self.image_extensions = ["jpg","png","gif"]
+        self.debugLevel = 5
+        self.loadFiles(args)
     
     # Gets the file list
     def loadFiles(self, path):
@@ -26,21 +37,21 @@ class VAB_loadfolder:
         elif os.access(path, os.R_OK):       
             path_to_file = args.path
         else:
-            debugPrint("Folder not found " + path, debugLevel, 2):
+            debugPrint("Folder not found " + path, debugLevel, 2)
 
         for root, dirs, files in os.walk(path_to_file):
             for name in files:
                 if args.regex:
-                    output_list.append(cullRegex(os.path.join(root, name), args.regex))            
+                    output_list.append(self.cullRegex(os.path.join(root, name), args.regex))            
 
                 elif args.d:
-                    output_list.append(cullDanbooru(os.path.join(root, name)))
+                    output_list.append(self.cullDanbooru(os.path.join(root, name)))
 
                 elif args.all:
                     output_list.append(os.path.join(root, name))
 
                 else:
-                    output_list.append(cullNonImage(os.path.join(root, name)))
+                    output_list.append(self.cullNonImage(os.path.join(root, name)))
 
         print(output_list)
             
@@ -50,11 +61,10 @@ class VAB_loadfolder:
 
     # Cull file to only danbooru style filenames
     def cullDanbooru(self, data):
-        return (([data.split('.')[1] in image_extensions) && ((re.match(data.split('.')[0],"[0-9a-f]{64}") != None)))
-
+        return ((data.split('.')[1] in set(image_extensions)) and ((re.match(data.split('.')[0],"[0-9a-f]{64}") != None)))
     # Cull non image files (by extension)
     def cullNonImage(self, data):
-        return (([data.split('.')[1] in image_extensions))
+        return ((data.split('.')[1] in set(image_extensions)))
 
 
 if __name__ == '__main__':
@@ -64,5 +74,5 @@ if __name__ == '__main__':
 	parser.add_argument('-d',  help="only load images that fit the danbooru naming scheme")
 	parser.add_argument('--all', '-a', help="load any file not just one that fits known image file extensions")
 	args = parser.parse_args()
-	VAB_loadFolder(args)
+	x = VAB_loadfolder(args)
 
