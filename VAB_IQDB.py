@@ -11,28 +11,26 @@
 #import Image as im
 import sys
 #	depreciacted by urllib.request and uurllib.error in python 3
-import urllib2
-import urllib
+import urllib.request, urllib.error, urllib.parse
+import urllib.request, urllib.parse, urllib.error
 import Utility as utl
 from bs4 import *
-import MultipartPostHandler
+import requests
+#import MultipartPostHandler
 
 class VAB_IQDB:
   
     def getDbuPostID(imageMD5):
         url = "http://danbooru.donmai.us/posts?utf8=%E2%9C%93&tags=md5%3A" + imageMD5
-        request = urllib2.Request(url)
-        response = urllib2.urlopen(request)
-        soup = BeautifulSoup(response.read())
-        postID = soup.article['id'][5:]
+        r = requests.get(url, proxies=proxies, auth=auth)
+        postID = BeautifulSoup(r.text).article['id'][5:]
         return postID
        
     def getDbuTagList(postID):
         url = "http://danbooru.donmai.us/posts/" + postID
-        request = urllib2.Request(url)
-        response = urllib2.urlopen(request)
+        r = requests.get(url, proxies=proxies, auth=auth)
 
-        soup = BeautifulSoup(response.read())
+        soup = BeautifulSoup(r.text)
         
         copyrightHTML = soup.select('.category-3')
         charactersHTML = soup.select('.category-4')
@@ -55,54 +53,69 @@ class VAB_IQDB:
         return [copyrights, characters, artists, tags]
 
     def getGbuTagList(postID):
-        print "Scraping Gbu is not currently supported"
+        print("Scraping Gbu is not currently supported")
         return None
 
     def printTagList(tagList):
-        print 'copyrights:' + str(tagList[0])
-        print 'characters:' + str(tagList[1])
-        print 'artists:' + str(tagList[2])
-        print 'tags:' + str(tagList[3])
+        print('copyrights:' + str(tagList[0]))
+        print('characters:' + str(tagList[1]))
+        print('artists:' + str(tagList[2]))
+        print('tags:' + str(tagList[3]))
 
+   # def iqdbScrape(url, fileToTest):
+   
     fileNames = sys.argv[1:]
 
     md5List = []
     for filename in fileNames:
         md5List.append(utl.md5(filename))
 
-    #order is wierd. why?
-    username, password, proxyPort, proxyAddr, useProxy = utl.loadNetworkConfig('networkFile') 
+    useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('networkFile') 
+
+    global proxies
+    global auth
 
     if useProxy:
-        proxyHandle = utl.generateProxyHandle(username, password, proxyAddr, proxyPort)
+        proxies = { 'http': 'http://%s:%d' % (proxyAddr, proxyPort) }
+        auth = requests.auth.HTTPProxyAuth(username, password)
     else:
-        proxyHandle = None
-
-    urllib2.install_opener(urllib2.build_opener(proxyHandle))
+        proxies = None
+        auth = None
 
     fileToTest = utl.dbuFilename(md5List[0], utl.fileExtension(fileNames[0]))
 
-    if utl.dbuExistsImage(fileToTest):
-        print "Scraping Dbu"
+    if utl.dbuExistsImage(fileToTest, proxies, auth):
+        print("Scraping Dbu")
         postID = getDbuPostID(md5List[0])
         tagList = getDbuTagList(postID)
         printTagList(tagList)
-
     else:
-        print "Scraping IQDB"
-        url = "http://iqdb.org/?"
-        params = { 'file' : open(fileNames[0],'rb') }
-        opener = urllib2.build_opener(proxyHandle, MultipartPostHandler.MultipartPostHandler)
-        response = opener.open(url, params)
+        print("Scraping IQDB")
+        files = { 'file' : open(fileNames[0],'rb')}
 
-        soup = BeautifulSoup(response.read())
-        result = soup.find_all('a')[1]
-        if result['href'][7:15] == "gelbooru":
-            print "Image match on Gbu. "
-            postID = soup.find_all('a')[1]['href'][50:]
-            tagList = getGbuTagList(postID)
-        elif result['href'][7:15] == "danbooru":
-            print "Image match on Dbu. "
-            postID = soup.find_all('a')[1]['href'][36:]
-            tagList = getDbuTagList(postID)
-            printTagList(tagList)
+        r = requests.post('http://iqdb.org/', files=files, proxies=proxies, auth=auth)
+        soup = BeautifulSoup(r.text)
+        if soup.find_all('table')[1].th.string == 'No relevant matches':
+            print("Image not found on any iqdb linkable site")
+        else:        
+            result = soup.find_all('a')[1]
+            if result['href'][7:15] == 'gelbooru':
+                print("Image match on Gbu. ")
+                postID = soup.find_all('a')[1]['href'][50:]
+                tagList = getGbuTagList(postID)
+            elif result['href'][7:15] == 'danbooru':
+                print("Image match on Dbu. ")
+                postID = soup.find_all('a')[1]['href'][36:]
+                tagList = getDbuTagList(postID)
+                printTagList(tagList)
+
+        # iqdbList = {
+        # 'Danbooru' : 'http://danbooru.iqdb.org/',
+        # 'Gelbooru' : 'http://gelbooru.iqdb.org/',
+        # 'eshuushuu' : 'http://e-shuushuu.iqdb.org/',
+        # 'yande.re' : 'http://yandere.iqdb.org/',
+        # 'The Anime Gallery' : 'http://theanimegallery.iqdb.org/',
+        # 'zerochan' : 'http://zerochan.iqdb.org/',
+        # 'Manga Drawing' : 'http://mangadrawing.iqdb.org/',
+        # 'Anime-Pictures' : 'http://anime-pictures.iqdb.org/',
+        # }

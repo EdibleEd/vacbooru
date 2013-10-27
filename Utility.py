@@ -1,9 +1,7 @@
 # A bunch of utility functions
 import hashlib
-import urllib2
-from urllib2 import URLError
-import urllib
-import ConfigParser
+import requests
+import configparser
 
 def md5(filepath):
 	return hashlib.md5(open(filepath, 'rb').read()).hexdigest().lower()
@@ -15,35 +13,17 @@ def fileExtension(filepath):
 	tokens = filepath.split('.')
 	return tokens[-1:][0]
 
-def dbuExistsImage(dbuFile):
+def dbuExistsImage(dbuFile, proxies, auth):
     url = "http://danbooru.donmai.us/data/" + dbuFile
-    request = urllib2.Request(url)
-    try:
-        response = urllib2.urlopen(request)
-        return True
-    except URLError, e:
-    	print "Exact image not found on Dbu."
-        #print e     #2.7
-        #print e    #3
-    return False
-
-def generateProxyHandle(username, password, proxyAddr, proxyPort):
-	passwordMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-	proxies = {'http':"http://%s" % proxyAddr}
-	proxy_info = {
-	'user' : username,
-	'pass' : password,
-	'host' : proxyAddr,
-	'port' : proxyPort 
-	}
-	# build a new opener that uses a proxy requiring authorization
-	proxy_support = urllib2.ProxyHandler({'http' : "http://%(user)s:%(pass)s@%(host)s:%(port)d" % proxy_info})
-	return proxy_support
-	#return urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
+    r = requests.get(url, proxies=proxies, auth=auth)
+    if r.status_code == 404:
+    	return False
+    else:
+    	return True
 
 def configMap(section, netFile):
     f = open(netFile, 'rb')
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(netFile)
     dict1 = {}
     options = config.options(section)
@@ -53,7 +33,7 @@ def configMap(section, netFile):
             if dict1[option] == -1:
                 DebugPrint("skip: %s" % option)
         except:
-            print("exception on %s!" % option)
+            print(("exception on %s!" % option))
             dict1[option] = None
     f.close()
     return dict1
@@ -74,7 +54,7 @@ def loadNetworkConfig(netFile):
 	useProxy = True
 	if proxyAddr == 'None' or proxyPort == 'None':
 		useProxy = False
-	return {useProxy, proxyAddr, int(proxyPort), username, password}
+	return (useProxy, proxyAddr, int(proxyPort), username, password)
 
 
 
