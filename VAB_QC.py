@@ -24,9 +24,12 @@ class VAB_QC:
 		else:
 			pass
 			
-	# Interactive mode, 
+	# Interactive quality checking
 	def mainLoop(self, args):
-		pass
+        mainloop = True
+        while (mainloop):
+            pass	
+    
 	
 	# Cull a set of tags from the data
 	def cullTags(self, data, tags):
