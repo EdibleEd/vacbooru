@@ -14,7 +14,7 @@ def fileExtension(filepath):
 	tokens = filepath.split('.')
 	return tokens[-1:][0]
 
-def dbuExistsImage(dbuFile):W
+def dbuExistsImage(dbuFile):
     url = "http://danbooru.donmai.us/data/" + dbuFile
     request = urllib2.Request(url)
     try:
