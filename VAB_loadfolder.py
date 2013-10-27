@@ -18,53 +18,57 @@ def debugPrint(message, level, threshold):
 # Takes a folder and returns all files that fit either the danbooru standard format, all image files, or all files that fit a regex depending on flags provided
 
 class VAB_loadfolder:
-
-    
-    
     def __init__(self, args):
         self.image_extensions = ["jpg","png","gif"]
         self.debugLevel = 5
-        self.loadFiles(args)
+        self.loadFiles(args.path)
     
     # Gets the file list
     def loadFiles(self, path):
-        path_to_file = ""        
-        rel_path = True       
-        output_list = []        
-        if os.access(os.path.join(os.getcwd(), args.path), os.R_OK):
-            path_to_file = os.path.join(os.getcwd(), path)
-        
-        elif os.access(path, os.R_OK):       
-            path_to_file = args.path
-        else:
-            debugPrint("Folder not found " + path, debugLevel, 2)
+        path_to_file = os.path.join(os.getcwd(), path)     
+        rel_path = True
+        output_list = []
+        if not(os.access(os.path.join(os.getcwd(), args.path), os.R_OK)):
+            if os.access(path, os.R_OK):       
+                path_to_file = args.path
+            else:
+                debugPrint("Folder not found " + path, debugLevel, 2)
 
+        print(path_to_file)
         for root, dirs, files in os.walk(path_to_file):
             for name in files:
                 if args.regex:
-                    output_list.append(self.cullRegex(os.path.join(root, name), args.regex))            
+                    if self.cullRegex(name, args.regex):
+                        output_list.append(os.path.join(root, name))            
 
                 elif args.d:
-                    output_list.append(self.cullDanbooru(os.path.join(root, name)))
+                    if self.cullDanbooru(name):
+                        output_list.append(os.path.join(root, name))
 
                 elif args.all:
                     output_list.append(os.path.join(root, name))
 
                 else:
-                    output_list.append(self.cullNonImage(os.path.join(root, name)))
+                    if self.cullNonImage(os.path.join(root, name)):
+                        output_list.append(os.path.join(root, name))
 
         print(output_list)
             
     # Cull file based on regex
     def cullRegex(self, data, regex):
-        return (re.match(data, regex) != None)
+        reg = re.compile(regex)
+        return (re.match(data, reg) != None)
 
     # Cull file to only danbooru style filenames
     def cullDanbooru(self, data):
-        return ((data.split('.')[1] in set(image_extensions)) and ((re.match(data.split('.')[0],"[0-9a-f]{64}") != None)))
+        # Danbooru images are 32 hex characters, then an image extension
+        reg = re.compile("[0-9a-f]{32}")
+        if (len(data.split('.')[0]) != 32):
+            return False
+        return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
     # Cull non image files (by extension)
     def cullNonImage(self, data):
-        return ((data.split('.')[1] in set(image_extensions)))
+        return ((data.split('.')[1] in set(self.image_extensions)))
 
 
 if __name__ == '__main__':
