@@ -1,3 +1,9 @@
+import VAB_QC
+import VAB_IQDB
+import VAB_upload
+import utility
+import VAB_loadfolder
+import os
 
 
 # Wrapper class that runs the whole shabang
@@ -21,6 +27,19 @@ class VAB_wrapper:
         pass
 
     def chain(self):
+
+        # Load configs
+
+        # Load files
+
+        # Find them on IQDB
+
+        # Quality check them
+
+        # Upload them to our stuff
+
+        # Cleanup
+
         pass
 
     def prepareConfigs(self):
@@ -28,4 +47,5 @@ class VAB_wrapper:
 
 if __name__ == '__main__':
     wrap = VAB_wrapper()
+    wrap.chain()
     
