@@ -70,13 +70,14 @@ class VAB_IQDB:
     for filename in fileNames:
         md5List.append(utl.md5(filename))
 
-    TEMPPASSWORD = '' #ADD PASSWORD HERE.
-        
-    username = 'kotarou'
-    password = TEMPPASSWORD
-    useECSProxy = True
-    
-    proxyHandle = utl.generateProxyHandle(username, password, useECSProxy)
+    #order is wierd. why?
+    username, password, proxyPort, proxyAddr, useProxy = utl.loadNetworkConfig('networkFile') 
+
+    if useProxy:
+        proxyHandle = utl.generateProxyHandle(username, password, proxyAddr, proxyPort)
+    else:
+        proxyHandle = None
+
     urllib2.install_opener(urllib2.build_opener(proxyHandle))
 
     fileToTest = utl.dbuFilename(md5List[0], utl.fileExtension(fileNames[0]))
