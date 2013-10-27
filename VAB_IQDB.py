@@ -15,7 +15,7 @@ import urllib2
 import urllib
 import Utility as utl
 from bs4 import *
-from poster import *
+import MultipartPostHandler
 
 class VAB_IQDB:
   
@@ -74,10 +74,10 @@ class VAB_IQDB:
         
     username = 'kotarou'
     password = TEMPPASSWORD
-    useECSProxy = False
+    useECSProxy = True
     
-    opener = utl.generateOpener(username, password, useECSProxy)
-    urllib2.install_opener(opener)
+    proxyHandle = utl.generateProxyHandle(username, password, useECSProxy)
+    urllib2.install_opener(urllib2.build_opener(proxyHandle))
 
     fileToTest = utl.dbuFilename(md5List[0], utl.fileExtension(fileNames[0]))
 
@@ -89,12 +89,11 @@ class VAB_IQDB:
 
     else:
         print "Scraping IQDB"
-        opener2 = poster.streaminghttp.register_openers()
-        
-        #datagen, headers = poster.encode.multipart_encode({'url': URL_TO_CHECK})
-        datagen, headers = poster.encode.multipart_encode({'file': open(fileNames[0],'rb')})
-        
-        response = opener2.open(urllib2.Request("http://iqdb.org/?", datagen, headers))
+        url = "http://iqdb.org/?"
+        params = { 'file' : open(fileNames[0],'rb') }
+        opener = urllib2.build_opener(proxyHandle, MultipartPostHandler.MultipartPostHandler)
+        response = opener.open(url, params)
+
         soup = BeautifulSoup(response.read())
         result = soup.find_all('a')[1]
         if result['href'][7:15] == "gelbooru":

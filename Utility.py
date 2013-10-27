@@ -26,7 +26,7 @@ def dbuExistsImage(dbuFile):
         #print e    #3
     return False
 
-def generateOpener(username, password, useECSProxy = False):
+def generateProxyHandle(username, password, useECSProxy = False):
 	proxy = 'www-cache.ecs.vuw.ac.nz'
 	if useECSProxy:
 		passwordMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -39,7 +39,8 @@ def generateOpener(username, password, useECSProxy = False):
 		}
 		# build a new opener that uses a proxy requiring authorization
 		proxy_support = urllib2.ProxyHandler({"http" : "http://%(user)s:%(pass)s@%(host)s:%(port)d" % proxy_info})
-		return urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
+		return proxy_support
+		#return urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
 	else:
 		return None;
 		
