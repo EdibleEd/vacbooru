@@ -18,11 +18,10 @@ def debugPrint(message, level, threshold):
 # Takes a folder and returns all files that fit either the danbooru standard format, all image files, or all files that fit a regex depending on flags provided
 
 class VAB_loadfolder:
-    def __init__(self, args):
+    def __init__(self, args, main):
         self.image_extensions = ["jpg","png","gif"]
         self.debugLevel = 5
-        self.loadFiles(args.path)
-    
+        
     # Gets the file list
     def loadFiles(self, path):
         path_to_file = os.path.join(os.getcwd(), path)     
@@ -52,7 +51,7 @@ class VAB_loadfolder:
                     if self.cullNonImage(os.path.join(root, name)):
                         output_list.append(os.path.join(root, name))
 
-        print(output_list)
+        return(output_list)
             
     # Cull file based on regex
     def cullRegex(self, data, regex):
@@ -78,5 +77,6 @@ if __name__ == '__main__':
 	parser.add_argument('-d',  help="only load images that fit the danbooru naming scheme")
 	parser.add_argument('--all', '-a', help="load any file not just one that fits known image file extensions")
 	args = parser.parse_args()
-	x = VAB_loadfolder(args)
+	loader = VAB_loadfolder(args)
+    print(loader.loadFiles(args.path))
 
