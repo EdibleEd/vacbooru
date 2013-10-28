@@ -16,18 +16,25 @@ import requests
 
 class VAB_IQDB:
     def __init__(self, args):
+        self.enablePervMode = args.pervMode
+        safeString = 'safe.'
+        if self.enablePervMode:
+            safeString = ''
         self.iqdbList = {
-        'Danbooru' : 'http://danbooru.iqdb.org/',
-        'Gelbooru' : 'http://gelbooru.iqdb.org/',
-        'eshuushuu' : 'http://e-shuushuu.iqdb.org/',
-        'yande.re' : 'http://yandere.iqdb.org/',
-        'The Anime Gallery' : 'http://theanimegallery.iqdb.org/',
-        'zerochan' : 'http://zerochan.iqdb.org/',
-        'Manga Drawing' : 'http://mangadrawing.iqdb.org/',
-        'Anime-Pictures' : 'http://anime-pictures.iqdb.org/'
+        'Danbooru' : ('http://'+safeString+'danbooru.iqdb.org/'),
+        'Gelbooru' : ('http://'+safeString+'gelbooru.iqdb.org/'),
+        'eshuushuu' : ('http://'+safeString+'e-shuushuu.iqdb.org/'),
+        'yande.re' : ('http://'+safeString+'yandere.iqdb.org/'),
+        'The Anime Gallery' : ('http://'+safeString+'theanimegallery.iqdb.org/'),
+        'zerochan' : ('http://'+safeString+'zerochan.iqdb.org/'),
+        'Manga Drawing' : ('http://'+safeString+'mangadrawing.iqdb.org/'),
+        'Anime-Pictures' : ('http://'+safeString+'anime-pictures.iqdb.org/')
         }
-        self.urlList = {
+        self.urlSearchList = {
         'Danbooru' : 'http://danbooru.donmai.us/posts?utf8=%E2%9C%93&tags=md5%3A',
+        }
+        self.urlPostList = {
+        'Danbooru' : 'http://danbooru.donmai.us/posts/',
         }
         useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('networkFile') 
         if useProxy:
@@ -38,47 +45,44 @@ class VAB_IQDB:
             self.auth = None
 
 
-    def urlRequest(self, url):
+    def soupUrlRequest(self, url):
         r = requests.get(url, proxies=self.proxies, auth=self.auth)
         if r.status_code == 200:
-            return r
+            return BeautifulSoup(r.text)
         else:
             return None
   
     def getPostIDfromMD5(self, service, imageMD5):
-        url = self.urlList[service] + imageMD5
-        r = self.urlRequest(url)
+        url = self.urlSearchList[service] + imageMD5
+        r = self.soupUrlRequest(url)
         if not r == None:
-            postID = BeautifulSoup(r.text).article['id'][5:]
-            if not postID == None:
-                return postID
+            return r.article['id'][5:]
         return None
        
     def getTagList(self, service, postID):
-        url = "http://danbooru.donmai.us/posts/" + postID
-        r = requests.get(url, proxies=self.proxies, auth=self.auth)
+        url = self.urlPostList[service] + postID
+        r = self.soupUrlRequest(url)
+        if not r == None:
+            copyrightHTML = r.select('.category-3')
+            charactersHTML = r.select('.category-4')
+            artistHTML = r.select('.category-1')
+            tagsHTML = r.select('.category-0')
 
-        soup = BeautifulSoup(r.text)
-        
-        copyrightHTML = soup.select('.category-3')
-        charactersHTML = soup.select('.category-4')
-        artistHTML = soup.select('.category-1')
-        tagsHTML = soup.select('.category-0')
+            copyrights = []
+            characters = []
+            artists = []
+            tags = []
+            for instance in copyrightHTML:
+                copyrights.append(instance.find_all('a')[1].string)
+            for instance in charactersHTML:
+                characters.append(instance.find_all('a')[1].string)
+            for instance in artistHTML:
+                artists.append(instance.find_all('a')[1].string)
+            for instance in tagsHTML:
+                tags.append(instance.find_all('a')[1].string)
 
-        copyrights = []
-        characters = []
-        artists = []
-        tags = []
-        for instance in copyrightHTML:
-            copyrights.append(instance.find_all('a')[1].string)
-        for instance in charactersHTML:
-            characters.append(instance.find_all('a')[1].string)
-        for instance in artistHTML:
-            artists.append(instance.find_all('a')[1].string)
-        for instance in tagsHTML:
-            tags.append(instance.find_all('a')[1].string)
-
-        return [copyrights, characters, artists, tags]
+            return [copyrights, characters, artists, tags]
+        return None
 
     def getGbuTagList(self, postID):
         print("Scraping Gbu is not currently supported")
@@ -133,6 +137,7 @@ class VAB_IQDB:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scrape the web for a set of passed images')
     parser.add_argument("path", help="Image to load")
+    parser.add_argument('-e', '--massivePervert', dest='pervMode', action='store_true', help='Enable MASSIVEPERVERT mode aka non-safe scraping')
     args = parser.parse_args()
     loader = VAB_IQDB(args)
     loader.go(args.path)
