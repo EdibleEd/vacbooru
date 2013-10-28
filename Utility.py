@@ -38,7 +38,7 @@ def configMap(section, netFile):
     f.close()
     return dict1
 
-#	Example network file
+# Example network file
 # [Default]
 # username: blah
 # password: blah
