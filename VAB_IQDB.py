@@ -44,6 +44,10 @@ class VAB_IQDB:
             self.proxies = None
             self.auth = None
 
+        self.imageList = args.path
+        self.md5List = []
+        for filename in self.imageList:
+            self.md5List.append(utl.md5(filename))
 
     def soupUrlRequest(self, url):
         r = requests.get(url, proxies=self.proxies, auth=self.auth)
@@ -56,36 +60,42 @@ class VAB_IQDB:
         url = self.urlSearchList[service] + imageMD5
         r = self.soupUrlRequest(url)
         if not r == None:
-            return r.article['id'][5:]
+            # Some images exist as a direct link
+            # But have ahd their posts removed
+            res = r.article
+            if not res == None:
+                return r.article['id'][5:]
+            else:
+                print("Image exists but has no post")
         return None
        
     def getTagList(self, service, postID):
-        url = self.urlPostList[service] + postID
-        r = self.soupUrlRequest(url)
-        if not r == None:
-            copyrightHTML = r.select('.category-3')
-            charactersHTML = r.select('.category-4')
-            artistHTML = r.select('.category-1')
-            tagsHTML = r.select('.category-0')
+        if not service == 'Danbooru':
+            print("Scraping" + service + "not currently supported" )
+        else:
+            if not postID == None:
+                url = self.urlPostList[service] + postID
+                r = self.soupUrlRequest(url)
+                if not r == None:
+                    copyrightHTML = r.select('.category-3')
+                    charactersHTML = r.select('.category-4')
+                    artistHTML = r.select('.category-1')
+                    tagsHTML = r.select('.category-0')
 
-            copyrights = []
-            characters = []
-            artists = []
-            tags = []
-            for instance in copyrightHTML:
-                copyrights.append(instance.find_all('a')[1].string)
-            for instance in charactersHTML:
-                characters.append(instance.find_all('a')[1].string)
-            for instance in artistHTML:
-                artists.append(instance.find_all('a')[1].string)
-            for instance in tagsHTML:
-                tags.append(instance.find_all('a')[1].string)
+                    copyrights = []
+                    characters = []
+                    artists = []
+                    tags = []
+                    for instance in copyrightHTML:
+                        copyrights.append(instance.find_all('a')[1].string)
+                    for instance in charactersHTML:
+                        characters.append(instance.find_all('a')[1].string)
+                    for instance in artistHTML:
+                        artists.append(instance.find_all('a')[1].string)
+                    for instance in tagsHTML:
+                        tags.append(instance.find_all('a')[1].string)
 
-            return [copyrights, characters, artists, tags]
-        return None
-
-    def getGbuTagList(self, postID):
-        print("Scraping Gbu is not currently supported")
+                    return [copyrights, characters, artists, tags]
         return None
 
     def printTagList(self, tagList):
@@ -96,48 +106,47 @@ class VAB_IQDB:
 
    # def iqdbScrape(url, fileToTest):
    
-    def go(self, path):
-        fileName = path
-        # md5List = []
-        # for filename in fileNames:
-        #     md5List.append(utl.md5(filename))
-        md5List = utl.md5(fileName)
-        useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('networkFile') 
+    def go(self):
+        numImages = len(self.imageList)
+        for i in range(numImages):
+            fileToTest = utl.dbuFilename(self.md5List[i], utl.fileExtension(self.imageList[i]))
 
-        fileToTest = utl.dbuFilename(md5List, utl.fileExtension(fileName))
-
-        if utl.dbuExistsImage(fileToTest, self.proxies, self.auth):
-            # This does not guarentee the image is still linkable
-            # Images that have been removed have no postID
-            # But still remain direct linkable for some time
-            print("Scraping Dbu")
-            postID = self.getPostIDfromMD5('Danbooru', md5List)
-            tagList = self.getTagList('Danbooru', postID)
-            self.printTagList(tagList)
-        else:
-            print("Scraping IQDB")
-            files = { 'file' : open(fileNames[0],'rb')}
-
-            r = requests.post('http://iqdb.org/', files=files, proxies=self.proxies, auth=self.auth)
-            soup = BeautifulSoup(r.text)
-            if soup.find_all('table')[1].th.string == 'No relevant matches':
-                print("Image not found on any iqdb linkable site")
-            else:        
-                result = soup.find_all('a')[1]
-                if result['href'][7:15] == 'gelbooru':
-                    print("Image match on Gbu. ")
-                    postID = soup.find_all('a')[1]['href'][50:]
-                    tagList = self.getGbuTagList(postID)
-                elif result['href'][7:15] == 'danbooru':
-                    print("Image match on Dbu. ")
-                    postID = soup.find_all('a')[1]['href'][36:]
-                    tagList = self.getDbuTagList(postID)
+            if utl.dbuExistsImage(fileToTest, self.proxies, self.auth):
+                # This does not guarentee the image is still linkable
+                # Images that have been removed have no postID
+                # But still remain direct linkable for some time
+                print("Scraping Dbu")
+                postID = self.getPostIDfromMD5('Danbooru', self.md5List[i])
+                tagList = self.getTagList('Danbooru', postID)
+                if tagList == None:
+                    print("No tags findable")
+                else:
+                    self.printTagList(tagList)
+            else:
+                print("Scraping IQDB")
+                files = { 'file' : open(fileNames[0],'rb')}
+                r = requests.post('http://iqdb.org/', files=files, proxies=self.proxies, auth=self.auth)
+                soup = BeautifulSoup(r.text)
+                
+                if soup.find_all('table')[1].th.string == 'No relevant matches':
+                    print("Image not found on any iqdb linkable site")
+                else:        
+                    result = soup.find_all('a')[1]
+                    tagList = []
+                    if result['href'][7:15] == 'gelbooru':
+                        print("Image match on Gbu. ")
+                        postID = soup.find_all('a')[1]['href'][50:]
+                        tagList = self.getTagList('Gelbooru', postID)
+                    elif result['href'][7:15] == 'danbooru':
+                        print("Image match on Dbu. ")
+                        postID = soup.find_all('a')[1]['href'][36:]
+                        tagList = self.getTagList('Danbooru', postID)
                     self.printTagList(tagList)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Scrape the web for a set of passed images')
-    parser.add_argument("path", help="Image to load")
+    parser = argparse.ArgumentParser(description='Scrape the web for a set of passed images',  usage='%(prog)s [options]')
+    parser.add_argument("path", help="Images to load", metavar='I', type=str, nargs='+')
     parser.add_argument('-e', '--massivePervert', dest='pervMode', action='store_true', help='Enable MASSIVEPERVERT mode aka non-safe scraping')
     args = parser.parse_args()
     loader = VAB_IQDB(args)
-    loader.go(args.path)
+    loader.go()
