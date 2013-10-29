@@ -8,18 +8,20 @@
 # Download image, as well as tags, other metadata, and source url
 # make hash of image
 # output all of this data
+
 #import Image as im
 import argparse
 import Utility as utl
 from bs4 import *
 import requests
 
-class VAB_IQDB:
+class VAB_scraper:
     def __init__(self, args):
         self.enablePervMode = args.pervMode
         safeString = 'safe.'
         if self.enablePervMode:
             safeString = ''
+            fun()
 
         self.scrapeTarget = args.scrapeTarget
 
@@ -213,7 +215,9 @@ class VAB_IQDB:
                 else:
                     self.printTagList(tagList)
 
-
+    def fun(self):
+        # Fun might go here        
+        pass
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Scrape the web for a set of passed images",  usage="%(prog)s [options]")
@@ -221,5 +225,5 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--massivePervert', dest='pervMode', action='store_true', help="Enable MASSIVEPERVERT mode aka non-safe scraping")
     parser.add_argument('-s', '--source', dest='scrapeTarget', type=str, default='iqdb', help="Select the service to scrape first: idqd (iqdb) or sourceNAO (sourenao)" )
     args = parser.parse_args()
-    loader = VAB_IQDB(args)
+    loader = VAB_scraper(args)
     loader.go()

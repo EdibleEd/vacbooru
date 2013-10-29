@@ -15,12 +15,12 @@ def debugPrint(message, level, threshold):
 # OPTIONALLY TAKES a regex OR a flag indicating standard danbooru format, a flag indicating not just image files
 # RETURNS a list of image file paths
 
-# Takes a folder and returns all files that fit either the danbooru standard format, all image files, or all files that fit a regex depending on flags provided
+# Takes a folder and returns any files that fit the danbooru standard formats, all image files or all files that fit a regex depending on flags provided
 
 class VAB_loadfolder:
     def __init__(self, args, main):
         self.image_extensions = ["jpg","png","gif"]
-        self.debugLevel = 5
+        self.debug_level = 5
         
     # Gets the file list
     def loadFiles(self, path):
@@ -31,7 +31,7 @@ class VAB_loadfolder:
             if os.access(path, os.R_OK):       
                 path_to_file = args.path
             else:
-                debugPrint("Folder not found " + path, debugLevel, 2)
+                debugPrint("Folder not found " + path, debug_level, 2)
 
         print(path_to_file)
         for root, dirs, files in os.walk(path_to_file):
@@ -60,11 +60,16 @@ class VAB_loadfolder:
 
     # Cull file to only danbooru style filenames
     def cullDanbooru(self, data):
+        
+        # Treat sample DBU files as regular files    
+        data = data.strip("sample-")
+        
         # Danbooru images are 32 hex characters, then an image extension
         reg = re.compile("[0-9a-f]{32}")
         if (len(data.split('.')[0]) != 32):
             return False
         return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
+
     # Cull non image files (by extension)
     def cullNonImage(self, data):
         return ((data.split('.')[1] in set(self.image_extensions)))
