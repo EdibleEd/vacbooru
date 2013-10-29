@@ -20,7 +20,7 @@ def debugPrint(message, level, threshold):
 class VAB_loadfolder:
     def __init__(self, args, main):
         self.image_extensions = ["jpg","png","gif"]
-        self.debugLevel = 5
+        self.debug_level = 5
         
     # Gets the file list
     def loadFiles(self, path):
@@ -31,7 +31,7 @@ class VAB_loadfolder:
             if os.access(path, os.R_OK):       
                 path_to_file = args.path
             else:
-                debugPrint("Folder not found " + path, debugLevel, 2)
+                debugPrint("Folder not found " + path, debug_level, 2)
 
         print(path_to_file)
         for root, dirs, files in os.walk(path_to_file):
