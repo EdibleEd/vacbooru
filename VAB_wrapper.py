@@ -62,4 +62,3 @@ if __name__ == '__main__':
 	parser.add_argument("config", help="Path to configuration script")
     wrap = VAB_wrapper()
     wrap.chain()
-    
