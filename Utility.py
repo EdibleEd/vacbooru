@@ -6,20 +6,9 @@ import configparser
 def md5(filepath):
 	return hashlib.md5(open(filepath, 'rb').read()).hexdigest().lower()
 
-def dbuFilename(md5, imageType):
-	return md5 + '.' + imageType
-
 def fileExtension(filepath):
 	tokens = filepath.split('.')
 	return tokens[-1:][0]
-
-def dbuExistsImage(dbuFile, proxies, auth):
-    url = "http://danbooru.donmai.us/data/" + dbuFile
-    r = requests.get(url, proxies=proxies, auth=auth)
-    if r.status_code == 404:
-    	return False
-    else:
-    	return True
 
 def configMap(section, netFile):
     f = open(netFile, 'rb')
