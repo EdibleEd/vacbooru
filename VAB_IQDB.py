@@ -20,6 +20,7 @@ class VAB_IQDB:
         safeString = 'safe.'
         if self.enablePervMode:
             safeString = ''
+            fun()
 
         self.scrapeTarget = args.scrapeTarget
 
@@ -213,7 +214,9 @@ class VAB_IQDB:
                 else:
                     self.printTagList(tagList)
 
-
+    def fun(self):
+        # Fun might go here        
+        pass
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Scrape the web for a set of passed images",  usage="%(prog)s [options]")
