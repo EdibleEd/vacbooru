@@ -60,6 +60,10 @@ class VAB_loadfolder:
 
     # Cull file to only danbooru style filenames
     def cullDanbooru(self, data):
+        
+        # Treat sample DBU files as the regular one                
+        data = data.strip("sample-")
+        
         # Danbooru images are 32 hex characters, then an image extension
         reg = re.compile("[0-9a-f]{32}")
         if (len(data.split('.')[0]) != 32):
