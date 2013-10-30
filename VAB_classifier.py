@@ -45,16 +45,16 @@ class VAB_classifier:
 	distDict = {}
 	
 	start = time.time()
-	os.chdir('classify/')
+	os.chdir('dbu\\')
 	for infile in os.listdir('.'):
 		outfile = os.path.splitext(infile)[0] + ".thumbnail"
 		if infile != outfile:
 		    try:
-		        im = Image.open(infile)
+		        im = Image.open(infile).convert('RGB')
 		        im.thumbnail(size, Image.ANTIALIAS)
 		        im.save(outfile, "png")
 		        fileDict[infile] =  rbgMV(Image.open(outfile))
-		    except IOError:
+		    except Exception: #IOError
 		       print "cannot create thumbnail for '%s'" % infile
 		# At this point we have the thumbnail to work with
 		# if 'thumbnail' in infile:
@@ -63,7 +63,7 @@ class VAB_classifier:
 	for key in fileDict.keys():
 		dist = 0
 		for i in range(6):
-			dist += (fileDict[key][i] - fileDict['6d9680d2c767f85aa694c7fb433281c3.jpg'][i])**2
+			dist += (fileDict[key][i] - fileDict['000aaaaaa_3.jpg'][i])**2
 		distDict[key]= dist
 	print sec_lowest(distDict)
 	time2 = time.time()

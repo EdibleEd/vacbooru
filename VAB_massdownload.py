@@ -32,3 +32,5 @@ for i in range(begin, begin+count):
 			print str(i) + " already exists"
 	except Exception as e:
 		print str(i) + " download failed: " + str(e)
+		if 'list index out of range' in str(e):
+			print "\t This is likley a image that needs dbu gold"
