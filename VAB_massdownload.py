@@ -24,10 +24,14 @@ for i in range(begin, begin+count):
 		newPath = 'http://danbooru.donmai.us/data/' + relURL
 		newFile = 'C:\\programming\\vacbooru-master\\dbu\\' + relURL
 		if not os.path.exists(newFile):
-			f = open(newFile,'wb')
-			f.write(urllib.urlopen(newPath).read())
-			f.close()
-			print str(i) + " downloaded"
+			r = urllib.urlopen(newPath).read()
+			if len(r) > 400:
+				f = open(newFile,'wb')
+				f.write(r)
+				f.close()
+				print str(i) + " downloaded"
+			else:
+				print str(i) + " is a 0 size image" 
 		else:
 			print str(i) + " already exists"
 	except Exception as e:
