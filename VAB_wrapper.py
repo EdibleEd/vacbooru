@@ -10,17 +10,24 @@ import argparse
 # Will take data from a bunch of configs primarily
 
 class VAB_wrapper:
-
+    
+    
+    
     def __init__(self, args):
+        
+        self.confFolder = "Config"
         if (args.config == None):
             with open(os.path.join(os.getcwd(), "Config", "main.conf"), 'r', encoding='utf-8') as mainConfig:
                 mainConf = loadSimpleConfig(config)
         else:
             with open(args.config), 'r', encoding='utf-8') as mainConfig:
                 mainConf = loadSimpleConfig(config)
-
+                self.confFolder = mainConf["configfolder"]
+                
+                
     def loadFolder(self, config):
-        pass
+        loader = VAB_loadfolder()
+        return loader.loadFiles(loader.path, loader.regex, loader.danbooru, loader.all)
 
     def scraperCall(self, config):
         pass
@@ -32,24 +39,22 @@ class VAB_wrapper:
         pass
 
     def chain(self):
-        
-        # Load configs      
-        with open(os.path.join(os.getcwd(), "Config", mainConf["folder"]), 'r', encoding='utf-8') as folder_conf:
-            folder_config = loadSimpleConfig(f)
     
-        with open(os.path.join(os.getcwd(), "Config", mainConf["scraper"]), 'r', encoding='utf-8') as scraper_conf:
-            scraper_config = loadSimpleConfig(f)
+        # Load configs      
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["folder"]), 'r', encoding='utf-8') as folder_conf:
+            folder_config = loadSimpleConfig(folder_conf)
+    
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["scraper"]), 'r', encoding='utf-8') as scraper_conf:
+            scraper_config = loadSimpleConfig(scraper_conf)
 
-        with open(os.path.join(os.getcwd(), "Config", mainConf["qc"]), 'r', encoding='utf-8') as QC_conf:
-            qc_config = loadSimpleConfig(f)
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["qc"]), 'r', encoding='utf-8') as QC_conf:
+            qc_config = loadSimpleConfig(QC_conf)
 
-        with open(os.path.join(os.getcwd(), "Config", mainConf["upload"]), 'r', encoding='utf-8') as upload_conf:
-            upload_config = loadSimpleConfig(f)
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["upload"]), 'r', encoding='utf-8') as upload_conf:
+            upload_config = loadSimpleConfig(upload_conf)
         
-        loadFolder(folder_config)
-        
-
-        scraperCall(scraper_config)
+        files = loadFolder(folder_config)
+        scraperCall(files, scraper_config)
 
 
         QC(QC_config)
