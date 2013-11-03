@@ -27,7 +27,9 @@ class VAB_wrapper:
                 
     def loadFolder(self, config):
         loader = VAB_loadfolder()
-        return loader.loadFiles(loader.path, loader.regex, loader.danbooru, loader.all)
+        if (config.imageExtensions):
+            loader.setImageExtensions(config.imageExtensions)
+        return loader.loadFiles(config.path, config.regex, config.danbooru, config.all)
 
     def scraperCall(self, config):
         pass

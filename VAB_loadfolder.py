@@ -52,7 +52,11 @@ class VAB_loadfolder:
                         output_list.append(os.path.join(root, name))
 
         return(output_list)
-            
+    
+    # Provide it with a different set of acceptable image types
+    def acceptedImageExtensions(self, new_extensions):
+        self.image_extensions = new_extensions
+    
     # Cull file based on regex
     def cullRegex(self, data, regex):
         reg = re.compile(regex)
