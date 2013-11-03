@@ -18,33 +18,33 @@ def debugPrint(message, level, threshold):
 # Takes a folder and returns any files that fit the danbooru standard formats, all image files or all files that fit a regex depending on flags provided
 
 class VAB_loadfolder:
-    def __init__(self, args, main):
+    def __init__(self):
         self.image_extensions = ["jpg","png","gif"]
         self.debug_level = 5
         
     # Gets the file list
-    def loadFiles(self, path):
+    def loadFiles(self, path, regex, isdanbooru, isall):
+        
         path_to_file = os.path.join(os.getcwd(), path)     
         rel_path = True
         output_list = []
-        if not(os.access(os.path.join(os.getcwd(), args.path), os.R_OK)):
+        if not(os.access(os.path.join(os.getcwd(), path), os.R_OK)):
             if os.access(path, os.R_OK):       
-                path_to_file = args.path
+                path_to_file = path
             else:
                 debugPrint("Folder not found " + path, debug_level, 2)
 
-        print(path_to_file)
         for root, dirs, files in os.walk(path_to_file):
             for name in files:
-                if args.regex:
-                    if self.cullRegex(name, args.regex):
+                if regex:
+                    if self.cullRegex(name, regex):
                         output_list.append(os.path.join(root, name))            
 
-                elif args.d:
+                elif isdanbooru:
                     if self.cullDanbooru(name):
                         output_list.append(os.path.join(root, name))
 
-                elif args.all:
+                elif isall:
                     output_list.append(os.path.join(root, name))
 
                 else:
@@ -82,6 +82,6 @@ if __name__ == '__main__':
 	parser.add_argument('-d',  help="only load images that fit the danbooru naming scheme")
 	parser.add_argument('--all', '-a', help="load any file not just one that fits known image file extensions")
 	args = parser.parse_args()
-	loader = VAB_loadfolder(args)
-    print(loader.loadFiles(args.path))
+	loader = VAB_loadfolder()
+    print(loader.loadFiles(args.path, args.regex, args.d, args.all))
 
