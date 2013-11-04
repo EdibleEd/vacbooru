@@ -31,7 +31,9 @@ import atexit
 import time 
 from math import exp
 import scipy.signal as ss_
+import random
 import scipy.misc as sm_
+
 
 class VAB_classifier:
 
@@ -125,46 +127,71 @@ class VAB_classifier:
 				minKey = key
 		return (minKey, minVal)
 
-	size = 128, 128
+	def generateThumbs(folder):
+		os.chdir(folder)
+		size = 128, 128
+		for infile in os.listdir('.'):
+			outfile = os.path.splitext(infile)[0] + '.thumbnail'
+			if infile != outfile:
+			    try:
+			        im = Image.open(infile).convert('RGB')
+			        im.thumbnail(size, Image.ANTIALIAS)
+			        im.save(outfile, "png")
+			    except Exception as e: #IOError
+			       print "cannot create thumbnail for '%s'" % infile
+			       print e
+
+	def scaleDeformedWriter(folder):
+		os.chdir(folder)
+		for i in range(3):
+			for infile in os.listdir('.'):
+				outfile = os.path.splitext(infile)[0] + '.deform' + str(i)
+				if infile != outfile:
+				    try:
+						im = Image.open(infile).convert('RGB')
+						rows = im.size[0]
+						cols = im.size[1]
+				        
+						rows = rows * (random.randint(40, 140) / 100.)
+						cols = cols * (random.randint(40, 140) / 100.)
+						size = rows, cols
+
+						im.thumbnail(size, Image.ANTIALIAS)
+						im.save(outfile, "png")
+				    except Exception as e: #IOError
+				       print "cannot create deformed for '%s'" % infile
+				       print e
+		os.chdir('..')
+
+	
 	fileDict = {}
 	distDict = {}
 	
 	start = time.time()
-	os.chdir('classify')
-	for infile in os.listdir('.'):
-		outfile = os.path.splitext(infile)[0] + '.thumbnail'
-		if infile != outfile:
-		    try:
-		        im = Image.open(infile).convert('RGB')
-		        im.thumbnail(size, Image.ANTIALIAS)
-		        im.save(outfile, "png")
-		    except Exception as e: #IOError
-		       print "cannot create thumbnail for '%s'" % infile
-		       print e
-	for infile in os.listdir('.'):
-		try:
-			if infile.endswith('.thumbnail'):
-				im = Image.open(infile).convert('RGB')
-				fileDict[infile] = rbgMV(im)
-		except Exception as e: #IOError
-				print "cannot create features for '%s'" % infile
-				print e
-		#fileDict[infile] =  (rbgMV(im))
-		# At this point we have the thumbnail to work with
-		# if 'thumbnail' in infile:
-		# 	continue
-	time1 = time.time()
-	for key in fileDict.keys():
-		#dist = (fileDict[key] - fileDict['123_mod.jpg'])**2
-		
-		dist = 0
-		for i in range(6):
-			dist += (fileDict[key][i] - fileDict['123_mod4.thumbnail'][i])**2
-			#dist += (fileDict[key] - fileDict['123_mod.jpg'])**2
-		distDict[key]= dist
-	print sec_lowest(distDict)
-	time2 = time.time()
-	print time1 - start
-	print time2 - time1
+	
+	#scaleDeformedWriter('classify')
+	generateThumbs('classify')
+
+	# for infile in os.listdir('.'):
+	# 	try:
+	# 		if infile.endswith('.thumbnail'):
+	# 			im = Image.open(infile).convert('RGB')
+	# 			fileDict[infile] = rbgMV(im)
+	# 	except Exception as e: #IOError
+	# 			print "cannot create features for '%s'" % infile
+	# 			print e
+
+	# time1 = time.time()
+	# for key in fileDict.keys():
+	# 	#dist = (fileDict[key] - fileDict['123_mod.jpg'])**2
+	# 	dist = 0
+	# 	for i in range(6):
+	# 		dist += (fileDict[key][i] - fileDict['123_mod4.thumbnail'][i])**2
+	# 		#dist += (fileDict[key] - fileDict['123_mod.jpg'])**2
+	# 	distDict[key]= dist
+	# print sec_lowest(distDict)
+	# time2 = time.time()
+	# print time1 - start
+	# print time2 - time1
 
 VAB_classifier()
