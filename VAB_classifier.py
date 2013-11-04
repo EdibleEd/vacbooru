@@ -1,3 +1,29 @@
+# This file us for the testing of classifiers that can be used to transform a n pixel x m pixel image into a feature set
+# Within reason, the used features need to be robust against:
+#	Minor changes in tone / average colour
+#	Resizing with a constant aspect ratio
+#	Image format conversion serrors
+#	Minor btye errors
+#	Insertion or removal of minor features like watermarks or signatures
+#	Artifacting from resizing/etc
+# It would be also useful to be robust against:
+#	Cropping
+#	ROI insertion into new images (for example, taking a character out and adding to white bg)
+# Image types that need to be handled:
+#	Single character dominated
+#	Landscape dominated
+#	Complex scene (typically multplie characters)
+#	Multi-frame gifs
+#	Enlarged pixel art
+#	Rasterized high resolution vectors 
+#
+#
+# Current considerations:
+#	Resize to 128x128 (or smaller. At which point is it too small?) to deal with resolution issues
+#	If the vast (>98% or so) majority of pixels are a single colour (source is probably a edge vector) needs special attn
+#	Will using HSV or HSL work?
+#	
+#	Thumbnail generator should be moved to be seperate (maybe in the downloader)
 import os, sys
 import Image
 import numpy as np_
@@ -17,6 +43,7 @@ class VAB_classifier:
 	# Comparator that creates a 6vector feature set
 	# 	<meanR meanB meanG varR varB varG>
 	# Performance on basic set is (117.4113 0.0014)
+	# When thumbnails are assumed (9.3652 0.001421)
 	def rbgMV(image):
 		rows = image.size[0]
 		cols = image.size[1]
@@ -44,8 +71,9 @@ class VAB_classifier:
 
 	# Compares image curvature in each of the R G and B pixel colours
 	# Does not cope well with big image modifications like erasing sections
-	# Performance on basic set is (117.6904459 0.00297808647156)
-	# Or for actual scaled images (117.495517015 0.00292205810547)
+	# Performance on basic set is (117.6905 0.00297)
+	# Or for actual scaled images (117.4955 0.00292)
+	# When thumbnails are assumed (24.12568 0.00289)
 	def curvature(image):
 		r, g, b = image.split()
 		rArray = np_.array(r)
@@ -104,17 +132,24 @@ class VAB_classifier:
 	start = time.time()
 	os.chdir('classify')
 	for infile in os.listdir('.'):
-		outfile = os.path.splitext(infile)[0] + ".thumbnail"
+		outfile = os.path.splitext(infile)[0] + '.thumbnail'
 		if infile != outfile:
 		    try:
 		        im = Image.open(infile).convert('RGB')
 		        im.thumbnail(size, Image.ANTIALIAS)
 		        im.save(outfile, "png")
-		        fileDict[infile] = curvature(im)
-		        #fileDict[infile] =  (rbgMV(im))
 		    except Exception as e: #IOError
 		       print "cannot create thumbnail for '%s'" % infile
 		       print e
+	for infile in os.listdir('.'):
+		try:
+			if infile.endswith('.thumbnail'):
+				im = Image.open(infile).convert('RGB')
+				fileDict[infile] = rbgMV(im)
+		except Exception as e: #IOError
+				print "cannot create features for '%s'" % infile
+				print e
+		#fileDict[infile] =  (rbgMV(im))
 		# At this point we have the thumbnail to work with
 		# if 'thumbnail' in infile:
 		# 	continue
@@ -123,8 +158,8 @@ class VAB_classifier:
 		#dist = (fileDict[key] - fileDict['123_mod.jpg'])**2
 		
 		dist = 0
-		for i in range(3):
-			dist += (fileDict[key][i] - fileDict['123_mod4.jpg'][i])**2
+		for i in range(6):
+			dist += (fileDict[key][i] - fileDict['123_mod4.thumbnail'][i])**2
 			#dist += (fileDict[key] - fileDict['123_mod.jpg'])**2
 		distDict[key]= dist
 	print sec_lowest(distDict)
