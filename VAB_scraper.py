@@ -1,7 +1,7 @@
 # TAKES a set of image paths
 # OPTIONALLY TAKES alternate IQDB url, acceptable sites ORDERED
-# RETURNS a set of 3 tupples of the form:
-# {source_url, source_hash, [tags]}
+# RETURNS a set of 4 tuples of the form:
+# {source_indicator + source_id, source_hash, filetype, [tags]}
 
 # Make a request to IQDB with the image
 # Find the highest res copy of the image, orders ties based on site
@@ -45,6 +45,7 @@ class VAB_scraper:
         self.urlDataList = {
         'Danbooru'          : 'http://danbooru.donmai.us/posts/',
         }
+
         useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('networkFile') 
         if useProxy:
             self.proxies = { 'http': 'http://%s:%d' % (proxyAddr, proxyPort) }
@@ -70,13 +71,13 @@ class VAB_scraper:
         r = self.soupUrlRequest(url)
         if not r == None:
             # Some images exist as a direct link
-            # But have ahd their posts removed
+            # But have had their posts removed
             res = r.article
             if not res == None:
                 return r.article['id'][5:]
             else:
                 print("Image exists but has no post")
-        return None
+        return 0
        
     def getTagList(self, service, postID):
         if service == 'Danbooru':
@@ -125,30 +126,54 @@ class VAB_scraper:
             return True
 
     def scrape(self, service, imageToFind):
+        # Scrape the image we are after off one of the aggregator sites
+        # I would like to supplement this with VAB_classify output
+        print(service)
         if service == 'iqdb':
+            # IQDB can take a URL or multi-part post image
+            # Only use the image post method as we have no reliable online storage at this step
+            
             print("Scraping IQDB")
-            files = { 'file' : open(imageToFind,'rb')}
-            r = requests.post('http://iqdb.org/', files=files, proxies=self.proxies, auth=self.auth)
-            soup = BeautifulSoup(r.text)
+            postID =        0
+            tagList =       []
+            fileToSend =    { 'file' : open(imageToFind,'rb')}
+            
+            # Upload the image (this may take a while)
+            response = requests.post('http://iqdb.org/', files=fileToSend, proxies=self.proxies, auth=self.auth)
+            soup = BeautifulSoup(response.text)
+            
             if soup.find_all('table')[1].th.string == 'No relevant matches':
+                # IQDB has failed us
                 print("Image not found on any iqdb linkable site")
-                return None
+                return (0,[])
+            
             else:
+                # IQDB has found a match
                 result = soup.find_all('a')[1]
-                tagList = []
+                
                 if result['href'][7:15] == 'gelbooru':
-                    print("Image match on Gbu. ")
+                    print("IQDB search match on Gbu.")
                     postID = soup.find_all('a')[1]['href'][50:]
-                    return self.getTagList('Gelbooru', postID)
+                    return (postID, 'Gelbooru')
+                
                 elif result['href'][7:15] == 'danbooru':
-                    print("Image match on Dbu. ")
+                    print("IQDB search match on Dbu. ")
                     postID = soup.find_all('a')[1]['href'][36:]
-                    return self.getTagList('Danbooru', postID)
+                    return (postID, 'Danbooru')
+        
         elif service == 'sourcenao':
+            # sourceNAO takes 
+            
             print("Scraping sourceNAO")
-            files = { 'file' : open(imageToFind,'rb')}
-            r = requests.post('http://saucenao.com/search.php', files=files, proxies=self.proxies, auth=self.auth)
-            soup = BeautifulSoup(r.text)
+            postID =        0
+            tagList =       []
+            fileToSend =    { 'file' : open(imageToFind,'rb')}
+            tempURL =       None
+            pixivOverride = False
+            
+            response = requests.post('http://saucenao.com/search.php', files=fileToSend, proxies=self.proxies, auth=self.auth)
+            soup = BeautifulSoup(response.text)
+            
             # Unlike iqdb, sourcenao scrapes pixiv
             # But if it returns a good danbooru result, we want to use that instead
             # Even if the pixiv result is a better match
@@ -156,64 +181,98 @@ class VAB_scraper:
             # SourceNAO shows characters and artist but that is all.
             if 'Daily Search Limit Exceeded.' in soup.strong.string:
                 print("sourceNAO search limit exceeded")
-                return None
+                return (-2,[])
 
             firstSourceLoc = soup.select('.result')[0].select('.linkify')[-2]['href']
             print("Image source is: " + firstSourceLoc)
             
             if 'pixiv' in firstSourceLoc:
-                secondSource = soup.select('.result')[1]
                 # We want to try find some english tags if possible
+                # So we'll check the second result for danbooru links
+                # Lower than second and we can't guarentee correct results
+                
+                secondSource = soup.select('.result')[1]
                 if not secondSource == None:
                     if 'have been hidden' not in secondSource.string:
-                        # Some results worth checking for english tags!
+                        # A result is worth checking for english tags!
                         secondSourceLoc = secondSource.find_all('img')[0]['title']
                         if "Danbooru" in secondSourceLoc:
+                            # The second result contained a useful danbooru link. Lets use it
                             print("Roughly matching dbu source: " + secondSourceLoc)
-                            postID = secondSource.select('.resultmiscinfo')[0].find_all('a')[0]['href'].split('show/')[1]
-                            return self.getTagList('Danbooru', postID)
+                            tempURL = secondSourceLoc
+                            pixivOverride = True  
                 else:
-                    # No results worth checking for english tags
+                    # We need to look on pixiv
                     print("Pixiv scraping not currently enabled")
                     # TODO
-        return None
+
+            if 'danbooru' in firstSourceLoc:
+                pass
+                # scrape the dbu result
+                # TODO
+            
+            if pixivOverride:
+                # We found a pixiv and a dbu link and we chose to use the dbu link
+                postID = tempURL.select('.resultmiscinfo')[0].find_all('a')[0]['href'].split('show/')[1]
+                return (postID, 'Danbooru')
+
+        return (0,[])
 
 
     def go(self):
+        # We don't mind at this point if the image is already on vacbooru
+        # As it may have new tags that get added by the current user
+
         numImages = len(self.imageList)
         for i in range(numImages):
-            fileToTest = self.md5List[i] + utl.fileExtension(self.imageList[i])
-            aggregator =    True
+            fileToTest =    self.md5List[i] + utl.fileExtension(self.imageList[i])
+            onDbu =         self.directLinkExists('Danbooru', fileToTest, 'file')
+            postID =        0
+            service =       None
+            tagList =       []
             
-            if not self.directLinkExists('Danbooru', fileToTest, 'file'):
-                aggregator = False
-                # The image exists on dbu with an identical md5
+            if onDbu:
+                # The image exists on dbu with an identical md5 hash
                 print("Scraping Dbu")
                 postID = self.getPostIDfromMD5('Danbooru', self.md5List[i])
-                if not postID == None and self.directLinkExists('Danbooru', postID, 'post'):
-                    tagList = self.getTagList('Danbooru', postID)
-                    self.printTagList(tagList)
+
+                # Some images exist viw direct link but have had their posts removed
+                # This normally means the image is flagged for deletion but is not yet removed 
+                if not self.directLinkExists('Danbooru', postID, 'post'):
+                    postID = 0
                 else:
-                    print("No tag findable on dbu")
-                    aggregator = True
+                    service = 'Danbooru'
             
-            if aggregator:
-                # Scrape an aggregator service
-                # Depending on your browsing habits, either iqdb or sourcenao work here
-                # Be careful of upload limits, these are not tested yet        
+            if postID == 0:
+                # Either the image isn't on Dbu, or it is but the post is deleted so we can't get the tags
+                # So instead, find the image off a scraping service
+                # Two services are supported: sourceNAO and IQDB
+                #   IQDB puts the user in a queue if under high load
+                #   sourceNAO has a limit of 100 uploads per day for a non-user
+                # Differing user browsing habits will benifit choosing one site over the other
+                #   game cgs or risque -    iqdb
+                #   pixiv or quality -      sourceNAO     
+                
                 if self.scrapeTarget == 'iqdb':
-                    tagList = self.scrape('iqbd', self.imageList[i])
-                    if tagList == None:
-                        tagList = self.scrape('sourcenao', self.imageList[i])
-                else:
-                    #self.scrapeTarget == 'sourcenao'
-                    tagList = self.scrape('sourcenao', self.imageList[i])
-                    if tagList == None:
-                        tagList = self.scrape('iqbd', self.imageList[i])
-                if tagList == None:
-                    print("Tag retrieval unsuccessful")
-                else:
-                    self.printTagList(tagList)
+                    postID, service = self.scrape('iqdb', self.imageList[i])
+                
+                if postID == 0:
+                    # The scrape target is sourceNAO or IQDB scrape failed
+                    postID, service = self.scrape('sourcenao', self.imageList[i])
+                    
+            # A > 0 postID means a taglist was found
+            # 0 means no post was found
+            # -1 means a post was found but no tags were (this shouldn't ever occur normally)
+            # -2 means sourceNAO or IQDB returned an unhelpful page like upload limit exceeded
+            if int(postID) <= 0:
+                print("Tag retrieval unsuccessful")
+            else:
+                tagList = self.getTagList(service, postID)  
+                self.printTagList(tagList)
+
+
+
+
 
     def fun(self):
         # Fun might go here        

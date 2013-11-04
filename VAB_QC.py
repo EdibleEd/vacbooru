@@ -2,13 +2,13 @@
 # {source_url, source_hash, image_extension [tags]}
 # RETURNS a set of tupples of the form
 # {source_url, source_hash, image_extension [tags]}
-# Control tasgs are prefixed with <letter>:: and are
+# Control tags are prefixed with <letter>:: and are
 #
 # a::   Artist
 # p::   Copyright
 # c::   Characters
 # r::   Rating
-# s::   Origional Source
+# s::   Original Source
 # v::   Username to upload under
 # x::   Resolution, x axis
 # y::   Resolution, y axis
