@@ -1,8 +1,17 @@
-# TAKES a set of tupples of the form
-# {source_url, source_hash, [tags]}
-# OPTIONALLY TAKES cull tags list, user name
+# TAKES a list of tupples of the form
+# {source_url, source_hash, image_extension [tags]}
 # RETURNS a set of tupples of the form
-# {source_url, source_hash, [tags]}
+# {source_url, source_hash, image_extension [tags]}
+# Control tasgs are prefixed with <letter>:: and are
+#
+# a::   Artist
+# p::   Copyright
+# c::   Characters
+# r::   Rating
+# s::   Origional Source
+# v::   Username to upload under
+# x::   Resolution, x axis
+# y::   Resolution, y axis
 
 # A series of quality checking steps
 # All do not alter the format of the data
@@ -15,11 +24,13 @@
 
 class VAB_QC:
 
-	def __init__(self, args):
+	def __init__(self, data, tags):
+        
+        this.data = data
 		# if in interactive mode, prompt the user to perform actions
 		if(args.interactive):
 			mainLoop(args)
-			
+        			
 		# Otherwise perform all automated tasks specified
 		else:
 			pass
@@ -32,16 +43,16 @@ class VAB_QC:
     
 	
 	# Cull a set of tags from the data
-	def cullTags(self, data, tags):
-		pass
-	
-	# Add a set of tags to the data
-	def addTags(self, data, tags):
-		pass
+	def cullTags(self, toremove):
+        pass
+
+	# Add a set of tags to each image
+	def addTags(self, newtags):
+        pass
 		
-	# Add a user tag to the data
+	# Add a user tag to each image
 	def addUser(self, data, user):
-		pass
+		pass    
 	
 	# Interactively add tags to data
 	def editTags(self, data):

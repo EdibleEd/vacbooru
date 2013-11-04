@@ -32,7 +32,9 @@ class VAB_wrapper:
         return loader.loadFiles(config.path, config.regex, config.danbooru, config.all)
 
     def scraperCall(self, config):
-        pass
+
+        loader = VAB_scraper(args)
+        loader.go()
 
     def QC(self, config):
         pass
