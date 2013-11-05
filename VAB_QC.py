@@ -4,14 +4,15 @@
 # {source_url, source_hash, image_extension [tags]}
 # Control tags are prefixed with <letter>:: and are
 #
-# a::   Artist
-# p::   Copyright
-# c::   Characters
-# r::   Rating
-# s::   Original Source
-# v::   Username to upload under
-# x::   Resolution, x axis
-# y::   Resolution, y axis
+
+# a::   Artist\s
+# p::   Copyright\s
+# c::   Character\s
+# r::   Rating, Unique
+# s::   Origional Source, Unique
+# v::   Username\s to upload under
+# x::   Resolution, x axis, Unique
+# y::   Resolution, y axis, Unique
 
 # A series of quality checking steps
 # All do not alter the format of the data
@@ -25,7 +26,7 @@
 class VAB_QC:
 
 	def __init__(self, data, tags):
-        
+        self.unique_tag_prefixes = set["r::","s::","x::","y::"]
         this.data = data
 		# if in interactive mode, prompt the user to perform actions
 		if(args.interactive):
@@ -39,17 +40,34 @@ class VAB_QC:
 	def mainLoop(self, args):
         mainloop = True
         while (mainloop):
-            pass	
+            pass
     
-	
-	# Cull a set of tags from the data
-	def cullTags(self, toremove):
-        pass
+	# Cull a set of tags from every image, naive version
+	def cullTags(self, data, to_remove):
+        for item in data:
+            for tag in to_remove:
+                if tag in data[3]:
+                    data[3].remove(tag)
 
-	# Add a set of tags to each image
-	def addTags(self, newtags):
-        pass
-		
+	# Add a set of non control tags to each image
+	def addTags(self, data, new_tags):
+        for item in data:
+            for tag in new_tags:
+                if tag not in (set(item[3]):
+                    item[3].append(new_tags)
+
+    # Add some control tags while never allowing two of some tags
+    def addControlTags(self, data, new_tags):
+        for item in data:
+            for tag in new_tags:
+                if (tag[0:2] in unique_tag_prefixes:
+                    for old_tag in data[3]:
+                        if (tag[0:2] == old_tag[0:2])
+                            data.remove(old_tag)
+                        data.append(tag)
+                else:
+                    data.append(tag)
+
 	# Add a user tag to each image
 	def addUser(self, data, user):
 		pass    
