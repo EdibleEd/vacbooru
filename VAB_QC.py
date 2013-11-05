@@ -68,10 +68,6 @@ class VAB_QC:
                 else:
                     data.append(tag)
 
-	# Add a user tag to each image
-	def addUser(self, data, user):
-		pass    
-	
 	# Interactively add tags to data
 	def editTags(self, data):
 		pass
