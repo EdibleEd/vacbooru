@@ -106,11 +106,17 @@ class VAB_scraper:
             print("Scraping" + service + "not currently supported" )
         return None
 
-    def printTagList(self, tagList):
-        print('copyrights:' + str(tagList[0]))
-        print('characters:' + str(tagList[1]))
-        print('artists:' + str(tagList[2]))
-        print('tags:' + str(tagList[3]))
+    def formatTagList(self, tagList):
+        outList = []
+        for artist in tagList[2]:
+            outList.append('a::' + artist)
+        for copyright in tagList[0]:
+            outList.append('p::' + copyright)
+        for character in tagList[1]:
+            outList.append('c::' + character)
+        for tag in tagList[3]:
+            outList.append(tag)
+        return outList
 
 
     def directLinkExists(self, service, query, urlType):
@@ -268,11 +274,8 @@ class VAB_scraper:
                 print("Tag retrieval unsuccessful")
             else:
                 tagList = self.getTagList(service, postID)  
-                self.printTagList(tagList)
-
-
-
-
+                tagList = self.formatTagList(tagList)
+                print(tagList)
 
     def fun(self):
         # Fun might go here        
