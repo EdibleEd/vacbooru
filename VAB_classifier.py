@@ -32,7 +32,6 @@ import time
 from math import exp
 import scipy.signal as ss_
 import random
-import scipy.misc as sm_
 
 
 class VAB_classifier:
@@ -90,9 +89,9 @@ class VAB_classifier:
 		cb = 0
 		for i in range(len(rCurve)):
 			for j in range(len(rCurve[0])):
-				cr += rCurve[i, j]**2
-				cg += gCurve[i, j]**2
-				cb += bCurve[i, j]**2
+				cr += abs(rCurve[i, j])
+				cg += abs(gCurve[i, j])
+				cb += abs(bCurve[i, j])
 		return [cr, cb, cg]
 
 
@@ -140,6 +139,7 @@ class VAB_classifier:
 			    except Exception as e: #IOError
 			       print "cannot create thumbnail for '%s'" % infile
 			       print e
+		os.chdir('..')
 
 	def scaleDeformedWriter(folder):
 		os.chdir(folder)
@@ -152,8 +152,8 @@ class VAB_classifier:
 						rows = im.size[0]
 						cols = im.size[1]
 				        
-						rows = rows * (random.randint(40, 140) / 100.)
-						cols = cols * (random.randint(40, 140) / 100.)
+						rows = int(rows * (random.randint(40, 140) / 100.))
+						cols = int(cols * (random.randint(40, 140) / 100.))
 						size = rows, cols
 
 						im.thumbnail(size, Image.ANTIALIAS)
@@ -169,29 +169,29 @@ class VAB_classifier:
 	
 	start = time.time()
 	
-	#scaleDeformedWriter('classify')
+	scaleDeformedWriter('classify')
 	generateThumbs('classify')
+	os.chdir('classify')
+	for infile in os.listdir('.'):
+		try:
+			if infile.endswith('.thumbnail'):
+				im = Image.open(infile).convert('RGB')
+				fileDict[infile] = rbgMV(im)
+		except Exception as e: #IOError
+				print "cannot create features for '%s'" % infile
+				print e
 
-	# for infile in os.listdir('.'):
-	# 	try:
-	# 		if infile.endswith('.thumbnail'):
-	# 			im = Image.open(infile).convert('RGB')
-	# 			fileDict[infile] = rbgMV(im)
-	# 	except Exception as e: #IOError
-	# 			print "cannot create features for '%s'" % infile
-	# 			print e
-
-	# time1 = time.time()
-	# for key in fileDict.keys():
-	# 	#dist = (fileDict[key] - fileDict['123_mod.jpg'])**2
-	# 	dist = 0
-	# 	for i in range(6):
-	# 		dist += (fileDict[key][i] - fileDict['123_mod4.thumbnail'][i])**2
-	# 		#dist += (fileDict[key] - fileDict['123_mod.jpg'])**2
-	# 	distDict[key]= dist
-	# print sec_lowest(distDict)
-	# time2 = time.time()
-	# print time1 - start
-	# print time2 - time1
+	time1 = time.time()
+	for key in fileDict.keys():
+		#dist = (fileDict[key] - fileDict['123_mod.jpg'])**2
+		dist = 0
+		for i in range(6):
+			dist += abs(fileDict[key][i] - fileDict['000aaaaaa_3.thumbnail'][i])
+			#dist += (fileDict[key] - fileDict['123_mod.jpg'])**2
+		distDict[key]= dist
+	print sec_lowest(distDict)
+	time2 = time.time()
+	print time1 - start
+	print time2 - time1
 
 VAB_classifier()
