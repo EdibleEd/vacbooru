@@ -42,8 +42,15 @@ class VAB_QC:
         while (mainloop):
             pass
     
+    # Cull a file if it has any of a specific set of tags
+    def cullIfTags(self, data, to_remove):
+        for item in data:
+            for tag in to_remove:
+                if tag in item:
+                    data.remove(item)
+
 	# Cull a set of tags from every image, naive version
-	def cullTags(self, data, to_remove):
+	def cullSpecificTags(self, data, to_remove):
         for item in data:
             for tag in to_remove:
                 if tag in data[3]:
@@ -54,7 +61,8 @@ class VAB_QC:
         for item in data:
             for tag in new_tags:
                 if tag not in (set(item[3]):
-                    item[3].append(new_tags)
+                    item[3].append(tag)
+                    new_tags.remove(tag)
 
     # Add some control tags while never allowing two of some tags
     def addControlTags(self, data, new_tags):
@@ -65,8 +73,10 @@ class VAB_QC:
                         if (tag[0:2] == old_tag[0:2])
                             data.remove(old_tag)
                         data.append(tag)
+                        new_tags.remove(tag)
                 else:
                     data.append(tag)
+                    new_tags.remove(tag)
 
 	# Interactively add tags to data
 	def editTags(self, data):
