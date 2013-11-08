@@ -23,7 +23,7 @@ class VAB_loadfolder:
         self.debug_level = 5
         
     # Gets the file list
-    def loadFiles(self, path, regex, isdanbooru, isall):
+    def loadFiles(self, path, regex, isdanbooru, isall, istumblr):
         
         path_to_file = os.path.join(os.getcwd(), path)     
         rel_path = True
@@ -46,7 +46,11 @@ class VAB_loadfolder:
 
                 elif isall:
                     output_list.append(os.path.join(root, name))
-
+                    
+                elif istumblr:
+                    if self.cullTumblr(name):
+                        output_list.append(os.path.join(root, name))
+                        
                 else:
                     if self.cullNonImage(os.path.join(root, name)):
                         output_list.append(os.path.join(root, name))
@@ -57,12 +61,12 @@ class VAB_loadfolder:
     def acceptedImageExtensions(self, new_extensions):
         self.image_extensions = new_extensions
     
-    # Cull file based on regex
+    # Cull files based on regex
     def cullRegex(self, data, regex):
         reg = re.compile(regex)
         return (re.match(data, reg) != None)
 
-    # Cull file to only danbooru style filenames
+    # Cull files to only danbooru style filenames
     def cullDanbooru(self, data):
         
         # Treat sample DBU files as regular files    
@@ -73,12 +77,17 @@ class VAB_loadfolder:
         if (len(data.split('.')[0]) != 32):
             return False
         return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
-
+    
+    # Cull files to only tumblr style filenames
+    def cullTumblr(self, data):
+        reg = re.compile("(tumblr_[0-9a-zA-Z]{19}_)((75)|(100)|(250)|(400)|(500)|(1280))")
+        return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
+        
     # Cull non image files (by extension)
     def cullNonImage(self, data):
         return ((data.split('.')[1] in set(self.image_extensions)))
 
-
+    
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Recursively load a folder of images')
 	parser.add_argument("path", help="folder to use as a source of images")
@@ -87,5 +96,5 @@ if __name__ == '__main__':
 	parser.add_argument('--all', '-a', help="load any file not just one that fits known image file extensions")
 	args = parser.parse_args()
 	loader = VAB_loadfolder()
-    print(loader.loadFiles(args.path, args.regex, args.d, args.all))
+    print(loader.loadFiles(args.path, args.regex, args.d, args.all, args.tumblr))
 
