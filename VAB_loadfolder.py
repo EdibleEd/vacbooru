@@ -37,22 +37,30 @@ class VAB_loadfolder:
         for root, dirs, files in os.walk(path_to_file):
             for name in files:
                 if regex:
-                    if self.cullRegex(name, regex):
+                    if self.onlyRegex(name, regex):
                         output_list.append(os.path.join(root, name))            
 
-                elif isdanbooru:
-                    if self.cullDanbooru(name):
+                elif (danbooru.lower() == "any"):
+                    if self.anyDanbooru(name):
                         output_list.append(os.path.join(root, name))
-
-                elif isall:
-                    output_list.append(os.path.join(root, name))
                     
+                elif (danbooru.lower() == "sample"):
+                    pass
+
+                elif (danbooru.lower() == "nosample"):
+                    pass
+
                 elif istumblr:
-                    if self.cullTumblr(name):
+                    if self.anyTumblr(name):
                         output_list.append(os.path.join(root, name))
                         
+                # Loads any file regardless of extensions, unsafe
+                elif isall:
+                    output_list.append(os.path.join(root, name))
+                
+                # Default is any image                
                 else:
-                    if self.cullNonImage(os.path.join(root, name)):
+                    if self.onlyImage(os.path.join(root, name)):
                         output_list.append(os.path.join(root, name))
 
         return(output_list)
@@ -62,29 +70,38 @@ class VAB_loadfolder:
         self.image_extensions = new_extensions
     
     # Cull files based on regex
-    def cullRegex(self, data, regex):
+    def onlyRegex(self, data, regex):
         reg = re.compile(regex)
         return (re.match(data, reg) != None)
 
     # Cull files to only danbooru style filenames
-    def cullDanbooru(self, data):
+    def anyDanbooru(self, data):
         
-        # Treat sample DBU files as regular files    
-        data = data.strip("sample-")
-        
-        # Danbooru images are 32 hex characters, then an image extension
-        reg = re.compile("[0-9a-f]{32}")
+        # Danbooru images are optionally 'sample-', then 32 hex characters, then an image extension
+        reg = re.compile("(sample-)?[0-9a-f]{32}")
         if (len(data.split('.')[0]) != 32):
             return False
         return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
     
+    def onlySampleDanbooru(self, data):
+        reg = re.compile("sample-[0-9a-f]{32}")
+        if (len(data.split('.')[0]) != 32):
+            return False
+        return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
+    
+    def noSampleDanbooru(self, data):
+        reg = re.compile("[0-9a-f]{32}")
+        if (len(data.split('.')[0]) != 32):
+            return False
+        return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
+
     # Cull files to only tumblr style filenames
-    def cullTumblr(self, data):
+    def anyTumblr(self, data):
         reg = re.compile("(tumblr_[0-9a-zA-Z]{19}_)((75)|(100)|(250)|(400)|(500)|(1280))")
         return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
         
     # Cull non image files (by extension)
-    def cullNonImage(self, data):
+    def onlyImage(self, data):
         return ((data.split('.')[1] in set(self.image_extensions)))
 
     
