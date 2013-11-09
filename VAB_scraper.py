@@ -281,5 +281,5 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--massivePervert', dest='pervMode', action='store_true', help="Enable MASSIVEPERVERT mode aka non-safe scraping")
     parser.add_argument('-s', '--source', dest='scrapeTarget', type=str, default='iqdb', help="Select the service to scrape first: idqd (iqdb) or sourceNAO (sourenao)" )
     args = parser.parse_args()
-    loader = VAB_scraper(args.pervmode, args.scrapeTarget, args.path)
+    loader = VAB_scraper(args.pervMode, args.scrapeTarget, args.path)
     loader.go()
