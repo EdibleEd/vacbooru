@@ -104,14 +104,3 @@ class VAB_loadfolder:
     def onlyImage(self, data):
         return ((data.split('.')[1] in set(self.image_extensions)))
 
-    
-if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Recursively load a folder of images')
-	parser.add_argument("path", help="folder to use as a source of images")
-	parser.add_argument('--regex', '-r',action="store_true", help="optionally supply a regex and only load files that fit it")
-	parser.add_argument('-d',  help="only load images that fit the danbooru naming scheme")
-	parser.add_argument('--all', '-a', help="load any file not just one that fits known image file extensions")
-	args = parser.parse_args()
-	loader = VAB_loadfolder()
-    print(loader.loadFiles(args.path, args.regex, args.d, args.all, args.tumblr))
-
