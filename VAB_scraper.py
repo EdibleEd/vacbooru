@@ -134,7 +134,7 @@ class VAB_scraper:
     def scrape(self, service, imageToFind):
         # Scrape the image we are after off one of the aggregator sites
         # I would like to supplement this with VAB_classify output
-        print(service)
+
         if service == 'iqdb':
             # IQDB can take a URL or multi-part post image
             # Only use the image post method as we have no reliable online storage at this step
@@ -175,7 +175,6 @@ class VAB_scraper:
             tagList =       []
             fileToSend =    { 'file' : open(imageToFind,'rb')}
             tempURL =       None
-            pixivOverride = False
             
             response = requests.post('http://saucenao.com/search.php', files=fileToSend, proxies=self.proxies, auth=self.auth)
             soup = BeautifulSoup(response.text)
@@ -191,36 +190,31 @@ class VAB_scraper:
 
             firstSourceLoc = soup.select('.result')[0].select('.linkify')[-2]['href']
             print("Image source is: " + firstSourceLoc)
-            
+            print(firstSourceLoc)
             if 'pixiv' in firstSourceLoc:
                 # We want to try find some english tags if possible
                 # So we'll check the second result for danbooru links
                 # Lower than second and we can't guarentee correct results
-                
                 secondSource = soup.select('.result')[1]
                 if not secondSource == None:
-                    if 'have been hidden' not in secondSource.string:
+                    if 'have been hidden' not in secondSource:
                         # A result is worth checking for english tags!
-                        secondSourceLoc = secondSource.find_all('img')[0]['title']
-                        if "Danbooru" in secondSourceLoc:
+                        secondSourceLoc = secondSource.find_all('a')[1]['href']
+                        if 'danbooru' in secondSourceLoc:
                             # The second result contained a useful danbooru link. Lets use it
                             print("Roughly matching dbu source: " + secondSourceLoc)
-                            tempURL = secondSourceLoc
-                            pixivOverride = True  
+                            postID = secondSourceLoc[36:]
                 else:
                     # We need to look on pixiv
                     print("Pixiv scraping not currently enabled")
                     # TODO
 
-            if 'danbooru' in firstSourceLoc:
+            elif 'danbooru' in firstSourceLoc:
                 pass
                 # scrape the dbu result
                 # TODO
-            
-            if pixivOverride:
-                # We found a pixiv and a dbu link and we chose to use the dbu link
-                postID = tempURL.select('.resultmiscinfo')[0].find_all('a')[0]['href'].split('show/')[1]
-                return (postID, 'Danbooru')
+
+            return (postID, 'Danbooru')
 
         return (0,[])
 
