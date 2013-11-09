@@ -23,7 +23,7 @@ class VAB_loadfolder:
         self.debug_level = 5
         
     # Gets the file list
-    def loadFiles(self, path, regex, danbooru_mode, is_all, is_tumblr, tumblr_qual):
+    def loadFiles(self, path, mode, regex, danbooru_mode, tumblr_qual):
         
         path_to_file = os.path.join(os.getcwd(), path)     
         rel_path = True
@@ -36,20 +36,20 @@ class VAB_loadfolder:
 
         for root, dirs, files in os.walk(path_to_file):
             for name in files:
-                if regex:
+                if (mode == "regex"):
                     if self.onlyRegex(name, regex):
                         output_list.append(os.path.join(root, name))            
 
-                elif danbooru:
+                if (mode == "danbooru"):
                     if self.danbooru(name, danbooru_mode):
                         output_list.append(os.path.join(root, name))
                 
-                elif is_tumblr:
+                if (mode == "tumblr"):
                     if self.tumblr(name, tumblr_qual):
                         output_list.append(os.path.join(root, name)))
                 
                 # Loads any file regardless of extensions (IE not just known image extensions), unsafe
-                elif is_all:
+                if (mode == "all"):
                     output_list.append(os.path.join(root, name))
                 
                 # Default is any image file               
