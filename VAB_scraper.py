@@ -17,7 +17,7 @@ import requests
 
 class VAB_scraper:
     def __init__(self, pervmode, scrapeTarget, path):
-        self.enablePervMode = pervMode
+        self.enablePervMode = pervmode
         safeString = 'safe.'
         if self.enablePervMode:
             safeString = ''
@@ -40,7 +40,7 @@ class VAB_scraper:
         }
         self.urlPostList = {
         'Danbooru'          : 'http://danbooru.donmai.us/posts/',
-        'pixiv'             : 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id='
+        'Pixiv'             : 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id='
         }
         self.urlDataList = {
         'Danbooru'          : 'http://danbooru.donmai.us/posts/',
@@ -80,6 +80,11 @@ class VAB_scraper:
         return 0
        
     def getTagList(self, service, postID):
+        copyrights = []
+        characters = []
+        artists = []
+        tags = []
+        
         if service == 'Danbooru':
             url = self.urlPostList[service] + postID
             r = self.soupUrlRequest(url)
@@ -88,10 +93,6 @@ class VAB_scraper:
             artistHTML = r.select('.category-1')
             tagsHTML = r.select('.category-0')
 
-            copyrights = []
-            characters = []
-            artists = []
-            tags = []
             for instance in copyrightHTML:
                 copyrights.append(instance.find_all('a')[1].string)
             for instance in charactersHTML:
@@ -102,9 +103,26 @@ class VAB_scraper:
                 tags.append(instance.find_all('a')[1].string)
 
             return [copyrights, characters, artists, tags]
+        elif service == 'Pixiv':
+            url = self.urlPostList[service] + postID
+            r = self.soupUrlRequest(url)
+            
+            artists.append(r.select('.title')[4].string)
+
+            tagsHTML = r.select('.inline-list')
+
+ 
+            for instance in tagsHTML:
+                # Don't open pixiv-encycopedia links
+                if instance.find_all('img') == []:
+                    tags.append(instance.find_all('a')[1].string)
+            tags.append('tag_clean_request')
+
+
         else:
-            print("Scraping" + service + "not currently supported" )
-        return None
+            print("Scraping " + service + "not currently supported" )
+            return None
+        return [copyrights, characters, artists, tags]
 
     def formatTagList(self, tagList):
         outList = []
@@ -188,6 +206,13 @@ class VAB_scraper:
                 print("sourceNAO search limit exceeded")
                 return (-2,[])
 
+            try:
+                if 'Low similarity' in soup.select('.result')[0].string:
+                    print("sourceNAO found nothing")
+                    return (-2,[])
+            except:
+                pass
+
             firstSourceLoc = soup.select('.result')[0].select('.linkify')[-2]['href']
             print("Image source is: " + firstSourceLoc)
             print(firstSourceLoc)
@@ -204,10 +229,10 @@ class VAB_scraper:
                             # The second result contained a useful danbooru link. Lets use it
                             print("Roughly matching dbu source: " + secondSourceLoc)
                             postID = secondSourceLoc[36:]
-                else:
+                if postID == 0:
                     # We need to look on pixiv
-                    print("Pixiv scraping not currently enabled")
-                    # TODO
+                    postID = firstSourceLoc[61:]
+                    return (postID, 'Pixiv')
 
             elif 'danbooru' in firstSourceLoc:
                 pass
