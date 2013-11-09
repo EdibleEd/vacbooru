@@ -31,9 +31,10 @@ class VAB_wrapper:
             loader.setImageExtensions(config.imageExtensions)
         return loader.loadFiles(config.path, config.regex, config.danbooru, config.all)
 
-    def scraperCall(self, config):
-
-        loader = VAB_scraper(args)
+    def scraperCall(self, files, config):
+        
+        # Need error checking here
+        loader = VAB_scraper(config.pervmode, config.scrapeTarget, files)
         loader.go()
 
     def QC(self, config):

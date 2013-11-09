@@ -16,14 +16,14 @@ from bs4 import *
 import requests
 
 class VAB_scraper:
-    def __init__(self, args):
-        self.enablePervMode = args.pervMode
+    def __init__(self, pervmode, scrapeTarget, path):
+        self.enablePervMode = pervMode
         safeString = 'safe.'
         if self.enablePervMode:
             safeString = ''
             fun()
 
-        self.scrapeTarget = args.scrapeTarget
+        self.scrapeTarget = scrapeTarget
 
         self.iqdbList = {
         'Danbooru'          : ('http://'+safeString+'danbooru.iqdb.org/'),
@@ -54,7 +54,7 @@ class VAB_scraper:
             self.proxies = None
             self.auth = None
 
-        self.imageList = args.path
+        self.imageList = path
         self.md5List = []
         for filename in self.imageList:
             self.md5List.append(utl.md5(filename))
@@ -281,5 +281,5 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--massivePervert', dest='pervMode', action='store_true', help="Enable MASSIVEPERVERT mode aka non-safe scraping")
     parser.add_argument('-s', '--source', dest='scrapeTarget', type=str, default='iqdb', help="Select the service to scrape first: idqd (iqdb) or sourceNAO (sourenao)" )
     args = parser.parse_args()
-    loader = VAB_scraper(args)
+    loader = VAB_scraper(args.pervmode, args.scrapeTarget, args.path)
     loader.go()
