@@ -29,7 +29,7 @@ class VAB_wrapper:
         loader = VAB_loadfolder()
         if (config.imageExtensions):
             loader.setImageExtensions(config.imageExtensions)
-        return loader.loadFiles(config.path, config.regex, config.danbooru, config.all)
+        return loader.loadFiles(config.path, config.mode, config.regex, config.danbooru_mode, config.tumblr_qual)
 
     def scraperCall(self, files, config):
         

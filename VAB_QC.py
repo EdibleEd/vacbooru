@@ -2,8 +2,9 @@
 # {source_url, source_hash, image_extension [tags]}
 # RETURNS a set of tupples of the form
 # {source_url, source_hash, image_extension [tags]}
+# Hashes are md5
 # Control tags are prefixed with <letter>:: and are
-#
+
 
 # a::   Artist\s
 # p::   Copyright\s
