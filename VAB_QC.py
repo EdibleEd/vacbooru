@@ -42,7 +42,7 @@ class VAB_QC:
         mainloop = True
         while (mainloop):
             pass
-    
+    Unsaved Document 1
     # Cull a file if it has any of a specific set of tags
     def cullIfTags(self, data, to_remove):
         for item in data:
@@ -80,12 +80,33 @@ class VAB_QC:
                     new_tags.remove(tag)
 
 	# Interactively add tags to data
-	def editTags(self, data):
-		pass
-		
-	# Verify that the data has a correctly calculated checksum
-	def verifyChecksum(self, data):
-		pass
+    def interactiveEdit(self, data):
+        running = True        
+        while (Running):
+            print ("Enter command, Exit to stop altering data.")
+            command = input("> ")
+            running = self.evaluateCommand(data, command)
+
+
+    def evaluateCommand(self, data, command):
+        # Usual cleaning        
+        command = command.strip().lower()
+        if command = "print":
+            print ("Current data is " + formatPrint(data))
+        
+        elif command = "exit":
+            return False
+                    
+        elif command.startsWith("remove"):
+            removeParse(command.strip("remove"))
+
+    def removeParse(self, data):
+        pass
+
+	def replaceTags(self, tags, new_mappings):
+        for item in tags: 		
+            if item in new_mappings.getKeys():
+                item = new_mappings[item]
 		
 		
 if __name__ == '__main__':
