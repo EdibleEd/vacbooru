@@ -41,8 +41,8 @@ class VAB_QC:
 	def mainLoop(self, args):
         mainloop = True
         while (mainloop):
-            pass
-    Unsaved Document 1
+            pass 
+            
     # Cull a file if it has any of a specific set of tags
     def cullIfTags(self, data, to_remove):
         for item in data:
