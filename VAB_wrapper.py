@@ -11,8 +11,6 @@ import argparse
 
 class VAB_wrapper:
     
-    
-    
     def __init__(self, args):
         
         self.confFolder = "Config"

@@ -81,27 +81,30 @@ class VAB_QC:
 
 	# Interactively add tags to data
     def interactiveEdit(self, data):
-        running = True        
+        running = True  
+        print ("Enter command, Exit to stop altering data.")        
         while (Running):
-            print ("Enter command, Exit to stop altering data.")
+            
             command = input("> ")
             running = self.evaluateCommand(data, command)
 
 
-    def evaluateCommand(self, data, command):
-        # Usual cleaning        
+    def evaluateCommand(self, tags, command, args):
+    
+        # Clean up data      
         command = command.strip().lower()
-        if command = "print":
-            print ("Current data is " + formatPrint(data))
+        command_options = {"print": printTags(tags, args), "exit":exit(tags, args), "remove":removeTags(tags, args)}
+        return command_options[command](tags, args)
+    
+    def exit(self):
+        return 0
         
-        elif command = "exit":
-            return False
-                    
-        elif command.startsWith("remove"):
-            removeParse(command.strip("remove"))
-
-    def removeParse(self, data):
-        pass
+    def printTags(self, tags)
+        print ("Current tags are: " + formatPrint(tags))
+        return 1
+        
+    def removeParse(self, tags):
+        return 1
 
 	def replaceTags(self, tags, new_mappings):
         for item in tags: 		
