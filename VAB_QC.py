@@ -93,17 +93,19 @@ class VAB_QC:
     
         # Clean up data      
         command = command.strip().lower()
-        command_options = {"print": printTags(tags, args), "exit":exit(tags, args), "remove":removeTags(tags, args)}
+        command_options = {"print": printTags, "exit":exit, "remove":removeTags, "replace"replaceTags}
         return command_options[command](tags, args)
     
-    def exit(self):
+    def exit(self,tags,args):
         return 0
         
-    def printTags(self, tags)
+    def printTags(self, tags, args)
         print ("Current tags are: " + formatPrint(tags))
         return 1
         
-    def removeParse(self, tags):
+    def removeTags(self, tags, args)):
+    
+    
         return 1
 
 	def replaceTags(self, tags, new_mappings):
