@@ -107,8 +107,9 @@ class VAB_loadfolder:
 
     # Match any pixiv images
     # The pixiv naming format is a series of numbers. 1.jpg instead of 01.jpg, etc. Currently up to 8 digits. 
+    #       May have _pXX as well, if it is a page from a series
     def pixiv(self, data):
-        reg = re.compile("\d{1,10}") 
+        reg = re.compile("\d{1,10}_p\d{1,3}|\d{1,10}") 
         return ((data.split('.')[1] in set(self.image_extensions)) and ((reg.match(data.split('.')[0]) != None)))
 
     # Match any image(by extension)
@@ -121,8 +122,8 @@ if __name__ == '__main__':
     parser.add_argument("path", type=str, help="Path to load files from")
     parser.add_argument("mode", type=str, default="all", help="Image naming structure to use as a filter")
     #parser.add_argument("regex", type=str, default="[0-9a-Z]{10}", dest="regex", help="Regex to filter files by. Requires mode='regex'")
-    parser.add_argument("danbooru_mode", type=str, default="nosample", help="Set to sample or nosample to filter danbooru results. Requires mode='danbooru'")
+    #parser.add_argument("danbooru_mode", type=str, default="nosample", help="Set to sample or nosample to filter danbooru results. Requires mode='danbooru'")
     #parser.add_argument("tumblr_qual", type=str, default="", dest="tumblr_qual", help="Set to filter tumblr results by quality. Requires mode='tumblr'")
     args = parser.parse_args()
     run = VAB_loadfolder()
-    print(run.loadFiles(args.path, args.mode, "", args.danbooru_mode, ""))
+    print(run.loadFiles(args.path, args.mode, "", "", ""))
