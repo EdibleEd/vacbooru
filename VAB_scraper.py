@@ -149,7 +149,7 @@ class VAB_scraper:
         else:
             return True
 
-    def scrape(self, service, imageToFind):
+    def scrapeIDfromAggregator(self, service, imageToFind):
         # Scrape the image we are after off one of the aggregator sites
         # I would like to supplement this with VAB_classify output
 
@@ -158,9 +158,9 @@ class VAB_scraper:
             # Only use the image post method as we have no reliable online storage at this step
             
             print("Scraping IQDB")
-            postID =        0
-            tagList =       []
-            fileToSend =    { 'file' : open(imageToFind,'rb')}
+            postID          = 0
+            tagList         = []
+            fileToSend      = { 'file' : open(imageToFind,'rb')}
             
             # Upload the image (this may take a while)
             response = requests.post('http://iqdb.org/', files=fileToSend, proxies=self.proxies, auth=self.auth)
@@ -174,16 +174,17 @@ class VAB_scraper:
             else:
                 # IQDB has found a match
                 result = soup.find_all('a')[1]
+                if result['href'][7:15] == 'danbooru':
+                    print("IQDB search match on Dbu. ")
+                    postID = soup.find_all('a')[1]['href'][36:]
+                    return (postID, 'Danbooru')
                 
-                if result['href'][7:15] == 'gelbooru':
+                elif result['href'][7:15] == 'gelbooru':
                     print("IQDB search match on Gbu.")
                     postID = soup.find_all('a')[1]['href'][50:]
                     return (postID, 'Gelbooru')
                 
-                elif result['href'][7:15] == 'danbooru':
-                    print("IQDB search match on Dbu. ")
-                    postID = soup.find_all('a')[1]['href'][36:]
-                    return (postID, 'Danbooru')
+
         
         elif service == 'sourcenao':
             # sourceNAO takes 
@@ -279,11 +280,11 @@ class VAB_scraper:
                 #   pixiv or quality -      sourceNAO     
                 
                 if self.scrapeTarget == 'iqdb':
-                    postID, service = self.scrape('iqdb', self.imageList[i])
+                    postID, service = self.scrapeIDfromAggregator('iqdb', self.imageList[i])
                 
                 if postID == 0:
                     # The scrape target is sourceNAO or IQDB scrape failed
-                    postID, service = self.scrape('sourcenao', self.imageList[i])
+                    postID, service = self.scrapeIDfromAggregator('sourcenao', self.imageList[i])
                     
             # A > 0 postID means a taglist was found
             # 0 means no post was found

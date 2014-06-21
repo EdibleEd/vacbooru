@@ -8,8 +8,8 @@ import os
 # Prints if the level of debug printing is greater or equal to this methods threshold to be printed
 # typically 0 = never, 1 = standard running, 2-5 = various debug levels
 def debugPrint(message, level, threshold):
-	if (level >= threshold):
-		print(message)
+    if (level >= threshold):
+        print(message)
 
 # TAKES a directory path
 # OPTIONALLY TAKES a regex OR a flag indicating standard danbooru format, a flag indicating not just image files
@@ -19,7 +19,7 @@ def debugPrint(message, level, threshold):
 
 class VAB_loadfolder:
     def __init__(self):
-        self.image_extensions = ["jpg","png","gif"]
+        self.image_extensions = ["jpg","png","gif","jpeg"]
         self.debug_level = 5
         
     # Gets the file list
@@ -32,7 +32,8 @@ class VAB_loadfolder:
             if os.access(path, os.R_OK):       
                 path_to_file = path
             else:
-                debugPrint("Folder not found " + path, debug_level, 2)
+                #debugPrint("Folder not found " + path, debug_level, 2)
+                print("Folder not found " + path)
 
         for root, dirs, files in os.walk(path_to_file):
             for name in files:
@@ -46,8 +47,12 @@ class VAB_loadfolder:
                 
                 if (mode == "tumblr"):
                     if self.tumblr(name, tumblr_qual):
-                        output_list.append(os.path.join(root, name)))
+                        output_list.append(os.path.join(root, name))
                 
+                if (mode == "pixiv"):
+                    if self.pixiv(name):
+                        output_list.append(os.path.join(root, name))
+
                 # Loads any file regardless of extensions (IE not just known image extensions), unsafe
                 if (mode == "all"):
                     output_list.append(os.path.join(root, name))
@@ -100,7 +105,20 @@ class VAB_loadfolder:
         reg = re.compile(regex)
         return ((data.split('.')[1] in set(self.image_extensions)) and ((re.match(data.split('.')[0],reg) != None)))
 
+    # Match any pixiv images
+    # The pixiv naming format is a series of numbers. 1.jpg instead of 01.jpg, etc. Currently up to 8 digits. 
+    def pixiv(self, data):
+        reg = re.compile("\d{1,10}") 
+        return ((data.split('.')[1] in set(self.image_extensions)) and ((reg.match(data.split('.')[0]) != None)))
+
     # Match any image(by extension)
     def onlyImage(self, data):
         return ((data.split('.')[1] in set(self.image_extensions)))
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Don't run this file by itself unless you're testing something. Use VAB_wrapper instead")
+    parser.add_argument("path", type=str, help="Path to load files from")
+    parser.add_argument("mode", type=str, default="all", help="Image naming structure to use as a filter")
+    args = parser.parse_args()
+    run = VAB_loadfolder()
+    print(run.loadFiles(args.path, args.mode, "", "", ""))

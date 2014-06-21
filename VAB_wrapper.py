@@ -18,7 +18,7 @@ class VAB_wrapper:
             with open(os.path.join(os.getcwd(), "Config", "main.conf"), 'r', encoding='utf-8') as mainConfig:
                 mainConf = loadSimpleConfig(config)
         else:
-            with open(args.config), 'r', encoding='utf-8') as mainConfig:
+            with open(args.config, 'r', encoding='utf-8') as mainConfig:
                 mainConf = loadSimpleConfig(config)
                 self.confFolder = mainConf["configfolder"]
                 
@@ -66,7 +66,7 @@ class VAB_wrapper:
         upload(upload_config)        
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Import and upload a folder of images to vacbooru')
-	parser.add_argument("config", help="Path to configuration script")
+    parser = argparse.ArgumentParser(description='Import and upload a folder of images to vacbooru')
+    parser.add_argument("config", help="Path to configuration script")
     wrap = VAB_wrapper()
     wrap.chain()

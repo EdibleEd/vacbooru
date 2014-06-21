@@ -26,19 +26,19 @@
 
 class VAB_QC:
 
-	def __init__(self, data, tags):
+    def __init__(self, data, tags):
         self.unique_tag_prefixes = set["r::","s::","x::","y::"]
         this.data = data
-		# if in interactive mode, prompt the user to perform actions
-		if(args.interactive):
-			mainLoop(args)
-        			
-		# Otherwise perform all automated tasks specified
-		else:
-			pass
-			
-	# Interactive quality checking
-	def mainLoop(self, args):
+        # if in interactive mode, prompt the user to perform actions
+        if(args.interactive):
+            mainLoop(args)
+                    
+        # Otherwise perform all automated tasks specified
+        else:
+            pass
+            
+    # Interactive quality checking
+    def mainLoop(self, args):
         mainloop = True
         while (mainloop):
             pass 
@@ -50,18 +50,18 @@ class VAB_QC:
                 if tag in item:
                     data.remove(item)
 
-	# Cull a set of tags from every image, naive version
-	def cullSpecificTags(self, data, to_remove):
+    # Cull a set of tags from every image, naive version
+    def cullSpecificTags(self, data, to_remove):
         for item in data:
             for tag in to_remove:
                 if tag in data[3]:
                     data[3].remove(tag)
 
-	# Add a set of non control tags to each image
-	def addTags(self, data, new_tags):
+    # Add a set of non control tags to each image
+    def addTags(self, data, new_tags):
         for item in data:
             for tag in new_tags:
-                if tag not in (set(item[3]):
+                if (tag not in set(item[3])):
                     item[3].append(tag)
                     new_tags.remove(tag)
 
@@ -69,9 +69,9 @@ class VAB_QC:
     def addControlTags(self, data, new_tags):
         for item in data:
             for tag in new_tags:
-                if (tag[0:2] in unique_tag_prefixes:
+                if (tag[0:2] in unique_tag_prefixes):
                     for old_tag in data[3]:
-                        if (tag[0:2] == old_tag[0:2])
+                        if (tag[0:2] == old_tag[0:2]):
                             data.remove(old_tag)
                         data.append(tag)
                         new_tags.remove(tag)
@@ -79,7 +79,7 @@ class VAB_QC:
                     data.append(tag)
                     new_tags.remove(tag)
 
-	# Interactively add tags to data
+    # Interactively add tags to data
     def interactiveEdit(self, data):
         running = True  
         print ("Enter command, Exit to stop altering data.")        
@@ -93,30 +93,29 @@ class VAB_QC:
     
         # Clean up data      
         command = command.strip().lower()
-        command_options = {"print": printTags, "exit":exit, "remove":removeTags, "replace"replaceTags}
+        command_options = {"print": printTags, "exit":exit, "remove":removeTags, "replace":replaceTags}
         return command_options[command](tags, args)
     
     def exit(self,tags,args):
         return 0
         
-    def printTags(self, tags, args)
+    def printTags(self, tags, args):
         print ("Current tags are: " + formatPrint(tags))
         return 1
         
-    def removeTags(self, tags, args)):
-    
-    
+    def removeTags(self, tags, args):
+
         return 1
 
-	def replaceTags(self, tags, new_mappings):
-        for item in tags: 		
+    def replaceTags(self, tags, new_mappings):
+        for item in tags:         
             if item in new_mappings.getKeys():
                 item = new_mappings[item]
-		
-		
+        
+        
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Cull an image list')
-	parser.add_argument('tags', metavar='N', nargs='+', help='A single tag list for the program')
-	parser.add_argument('-i', '-interactive',type=bool help="Set if running in interactive mode")
-	args = parser.parse_args()
-	QC(args)
+    parser = argparse.ArgumentParser(description='Cull an image list')
+    parser.add_argument('tags', metavar='N', nargs='+', help='A single tag list for the program')
+    parser.add_argument('-i', '-interactive',type=bool, help="Set if running in interactive mode")
+    args = parser.parse_args()
+    QC(args)
