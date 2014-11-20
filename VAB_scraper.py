@@ -12,7 +12,7 @@
 #import Image as im
 import argparse
 import Utility as utl
-from bs4 import *
+from bs4 import BeautifulSoup
 import requests
 
 class VAB_scraper:
@@ -46,7 +46,7 @@ class VAB_scraper:
         'Danbooru'          : 'http://danbooru.donmai.us/posts/',
         }
 
-        useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('networkFile') 
+        useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('config/network.conf') 
         if useProxy:
             self.proxies = { 'http': 'http://%s:%d' % (proxyAddr, proxyPort) }
             self.auth = requests.auth.HTTPProxyAuth(username, password)
@@ -127,11 +127,11 @@ class VAB_scraper:
     def formatTagList(self, tagList):
         outList = []
         for artist in tagList[2]:
-            outList.append('a::' + artist)
+            outList.append('artist:' + artist)
         for copyright in tagList[0]:
-            outList.append('p::' + copyright)
+            outList.append('copyright:' + copyright)
         for character in tagList[1]:
-            outList.append('c::' + character)
+            outList.append('character:' + character)
         for tag in tagList[3]:
             outList.append(tag)
         return outList
@@ -140,9 +140,9 @@ class VAB_scraper:
     def directLinkExists(self, service, query, urlType):
         url = ''
         if urlType == 'post':
-            url = self.urlPostList[service] + query
+            url = self.urlPostList[service] + str(query)
         elif urlType == 'file':
-            url = self.urlDataList[service] + query
+            url = self.urlDataList[service] + str(query)
         r = requests.get(url, proxies=self.proxies, auth=self.auth)
         if r.status_code == 404:
             return False
@@ -176,7 +176,8 @@ class VAB_scraper:
                 result = soup.find_all('a')[1]
                 if result['href'][7:15] == 'danbooru':
                     print("IQDB search match on Dbu. ")
-                    postID = soup.find_all('a')[1]['href'][36:]
+                    postID = soup.find_all('a')[1]['href'][32:]
+                    print(postID)
                     return (postID, 'Danbooru')
                 
                 elif result['href'][7:15] == 'gelbooru':
@@ -237,7 +238,7 @@ class VAB_scraper:
 
             elif 'danbooru' in firstSourceLoc:
                 pass
-                # scrape the dbu result
+                # scrape the dbu resu
                 # TODO
 
             return (postID, 'Danbooru')
@@ -295,8 +296,10 @@ class VAB_scraper:
             else:
                 tagList = self.getTagList(service, postID)  
                 tagList = self.formatTagList(tagList)
-                print(tagList)
-
+                for tag in tagList:
+                    tag.replace(' ', '_')
+                return(tagList)
+        return 0
     def fun(self):
         # Fun might go here        
         pass
