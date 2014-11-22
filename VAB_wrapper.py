@@ -30,7 +30,10 @@ class VAB_wrapper:
         for image in files:
             scraper.setFile(image)
             tagList = scraper.go()
-            results.append(tagList)
+            if tagList != 0:
+                results.append(tagList)
+            else:
+                print ("Image " + image + " ignored")
 
         return results
 

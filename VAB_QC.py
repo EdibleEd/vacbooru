@@ -26,11 +26,14 @@ class VAB_QC:
         image = Image.open(tagset['local_file'])
         x = image.size[0]
         y = image.size[1]
+        size = os.path.getsize(tagset['local_file'])
         image.close()
-        if x < tagset['width'] or y < tagset ['height']:
+        print(size, tagset['file_size'])
+        print(x, tagset['width'], y, tagset ['height'])
+        if x < tagset['width'] or y < tagset ['height'] or tagset['flag'] == 1:
             # The copy we have is smaller than the one hosted on dbu
             # We want to delete this image, and download the higher res version
-            print('Local file ' + tagset['local_file'] + ' is smaller than remote.')
+            print('Local file ' + tagset['local_file'] + ' does not correctly match target.')
             print('Removing old file')
             os.remove(tagset['local_file'])
 

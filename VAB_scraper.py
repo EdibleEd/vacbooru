@@ -44,7 +44,7 @@ class VAB_scraper:
         'Pixiv'             : 'http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id='
         }
         self.urlDataList = {
-        'Danbooru'          : 'http://danbooru.donmai.us/posts/',
+        'Danbooru'          : 'http://danbooru.donmai.us/data/',
         }
 
         self.proxies = None
@@ -61,6 +61,7 @@ class VAB_scraper:
         self.image      = path
         self.md5        = utl.md5(path)
         self.imageName  = self.md5 + '.' + utl.fileExtension(self.image)
+        self.flag       = False
 
     def soupUrlRequest(self, url):
         r = requests.get(url, proxies=self.proxies, auth=self.auth)
@@ -230,9 +231,9 @@ class VAB_scraper:
             # But have had their posts removed
             res = r.article
             if not res == None:
-                return r.article['id'][5:]
+                return res['id'][5:]
             else:
-                print("Image exists but has no post")
+                print("Image exists but has no post.")
         return 0
 
     def directLinkExists(self, service, query, urlType):
@@ -243,7 +244,7 @@ class VAB_scraper:
             url = self.urlDataList[service] + str(query)
         print(url)
         r = requests.get(url, proxies=self.proxies, auth=self.auth)
-        if r.status_code == 404:
+        if r.status_code != 200:
             return False
         else:
             return True
@@ -264,6 +265,7 @@ class VAB_scraper:
         #temp['tags'] = metadata['tag_string'] 
         temp['extension'] = metadata['file_ext'] 
         temp['pool'] = metadata['pool_string'] 
+        temp['file_size'] = metadata['file_size'] 
         temp['tag_string_artist'] = metadata['tag_string_artist'] 
         temp['tag_string_character'] = metadata['tag_string_character'] 
         temp['tag_string_copyright'] = metadata['tag_string_copyright'] 
@@ -273,19 +275,47 @@ class VAB_scraper:
         fin = self.image.rfind('\\')
         target = self.image[:fin] + '\\' + metadata['md5'] + '.' + metadata['file_ext']
         temp['target_file'] = target
+        if self.flag:
+            temp['flag'] = 1
+        else:
+            temp['flag'] = 0
         return temp
 
     def go(self):
 
         # Simpler method.
         # 
-        print(self.md5)
         dbu_md5FileNameMatch = self.directLinkExists('Danbooru', self.imageName, 'file')
+        if not dbu_md5FileNameMatch:
+            # We have failed to find using the generated md5
+            # Try again, with the md5 from the file name
+            print('Generated md5 cannot find file')
+            a = self.image.rfind('\\')+1
+            b = self.image.rfind('.')
+            md5 = self.image[a:]
+            print(md5)
+            dbu_md5FileNameMatch = self.directLinkExists('Danbooru', md5, 'file')
+            if dbu_md5FileNameMatch:
+                print('File name md5 finds file successfully. Updating known md5')
+                a = md5.rfind('.')
+                self.md5 = md5[:a]
+                self.flag = True
+        
         if dbu_md5FileNameMatch:
             # We have found an identical image on danbooru
             print('File exists on Dbu. Getting post ID')
             postID = self.getPostIDfromMD5('Danbooru', self.md5)
-            print(postID)
+            if postID == 0 and "sample" in self.image:
+                print("Sample image found. Attempting to find original image")
+                # We have the sample version of the image
+                a = self.image.rfind('-')+1
+                b = self.image.rfind('.')
+                brutemd5 = self.image[a:b]
+                postID = self.getPostIDfromMD5('Danbooru', brutemd5)
+                if postID != 0:
+                    print("Original post found. Updating.")
+                    self.md5 = brutemd5
+
             print('Querying Dbu for tags')
             idurl = 'http://danbooru.donmai.us/posts/' + postID + '.json'
 
@@ -295,7 +325,9 @@ class VAB_scraper:
             result = self.constructTags(image_metadata)
 
             return result
-
+        else:
+            print('Image md5 malformed or unfindable')
+            return 0
 
         # # We don't mind at this point if the image is already on vacbooru
         # # As it may have new tags that get added by the current user
