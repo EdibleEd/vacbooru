@@ -24,10 +24,11 @@ class VAB_upload:
 		# First thing to do, is retrieve a tage list for the image
 		f = open(tagset['local_file'], 'rb')
 		fileToSend	= { 'upload[file]' : f}
-		fff = { 'upload[tag_string]' : tagset['tag_string_general'],
+
+		fff = { 'upload[tag_string]' : tagset['tag_string'],
 				'upload[rating]' : tagset['rating'], 
 				'upload[source]' : tagset['source']}
-
+		#print(fff)
 		r = requests.post('http://anubis/uploads.json', files=fileToSend, data=fff, auth=HTTPBasicAuth(self.user, self.api_token), verify=False)
 		f.close()
 		print("Uploaded!")

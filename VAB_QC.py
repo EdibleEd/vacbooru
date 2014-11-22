@@ -46,6 +46,7 @@ class VAB_QC:
     def fileCheck(self, tagset):
         print('=========================================================')
         #print(tagset)
+
         image = Image.open(tagset['local_file'])
         x = image.size[0]
         y = image.size[1]
@@ -71,13 +72,25 @@ class VAB_QC:
         return 1
 
     def tagCheck(self, tagset):
+        
         if len(tagset['tag_string']) < 2:
             return 0
         for tag in self.bannedTags:
             for applied_tag in tagset['tag_string'].split(' '):
                 if tag == applied_tag:
                     return 0
-        return 1
+
+        temp = tagset['tag_string_general']
+        # Merge the tags for the dbu format
+        for tag in tagset['tag_string_artist'].split(' '):
+            temp = temp + " artist:" + tag
+        for tag in tagset['tag_string_character'].split(' '):
+            temp = temp + " character:" + tag
+        for tag in tagset['tag_string_copyright'].split(' '):
+            temp = temp + " copyright:" + tag
+
+        tagset['tag_string'] = temp
+        return tagset    
 
     def safeCheck(self, tagset):
         res = 1
@@ -107,10 +120,13 @@ class VAB_QC:
         if self.safeCheck(tagset) != 1:
             print("File rating modified")
 
-        if self.fileCheck(tagset) != 1:
-            print("File checking failed.")
-        elif self.tagCheck(tagset) != 1:
+        tagset = self.tagCheck(tagset)
+        #print(tagset)
+        if tagset == 0:
             print("Modifying tags failed.")
+            return 0
+        elif self.fileCheck(tagset) != 1:
+            print("File checking failed.")
         elif self.uploadCheck(tagset) != 1:
             print("Image already uploaded. Ignoring")
         else:
