@@ -4,47 +4,52 @@ import requests
 import configparser
 
 def md5(filepath):
-    return hashlib.md5(open(filepath, 'rb').read()).hexdigest().lower()
+	return hashlib.md5(open(filepath, 'rb').read()).hexdigest().lower()
 
 def fileExtension(filepath):
-    tokens = filepath.split('.')
-    return tokens[-1:][0]
+	tokens = filepath.split('.')
+	return tokens[-1:][0]
 
-def sanitizeLoadedConfig(configDict):
-    result = {}
-    # for section in configDict:
-    #     print(section)
-    #     for subsection in configDict[section]:
-            # if subsection == 'tumblr_qual':
-    data = configDict['Folder']['tumblr_qual'].replace(" ", "")
-    configDict['Folder']['tumblr_qual'] = data.split(',')
+def configMap(section, netFile):
+    f = open(netFile, 'rb')
+    config = configparser.ConfigParser()
+    config.read(netFile)
+    dict1 = {}
+    options = config.options(section)
+    for option in options:
+        try:
+            dict1[option] = config.get(section, option)
+            if dict1[option] == -1:
+                DebugPrint("skip: %s" % option)
+        except:
+            print(("exception on %s!" % option))
+            dict1[option] = None
+    f.close()
+    return dict1
 
-    data = configDict['Folder']['image_extensions'].replace(" ", "")
-    configDict['Folder']['image_extensions'] = data.split(',')
-
-
-
+# Example network file
+# [Default]
+# username: blah
+# password: blah
 # proxyaddr: www-cache.ecs.vuw.ac.nz
 # proxyport: 8080
 
-def loadConfig(configFile):
-    print(configFile)
-    config = configparser.RawConfigParser()
-    config.read(configFile)
-    
-    configDict = {}
-
-    configDict = config._sections
-
-    sanitizeLoadedConfig(configDict)
-
-    return configDict
+def loadNetworkConfig(netFile):
+	loadedConfig = configMap('Default', netFile)
+	username = loadedConfig['username']
+	password = loadedConfig['password']
+	proxyAddr = loadedConfig['proxyaddr']
+	proxyPort = loadedConfig['proxyport']
+	useProxy = True
+	if proxyAddr == 'None' or proxyPort == 'None':
+		useProxy = False
+	return (useProxy, proxyAddr, int(proxyPort), username, password)
 
 # Prints if the level of debug printing is greater or equal to this methods threshold to be printed
 # typically 0 = never, 1 = standard running, 2-5 = various debug levels
 def debugPrint(message, level, threshold):
-    if (level >= threshold):
-        print(message)
+	if (level >= threshold):
+		print(message)
         
 
 # Loads configuration dictionaries
@@ -64,3 +69,4 @@ def loadSimpleConfig(configF):
                     configDict[templ[0].strip()] = (templ[1].strip()) # strips are to get rid of lose lines and whitespace
     return configDict
 
+        

@@ -28,10 +28,17 @@ class VAB_upload:
 		# First thing to do, is retrieve a tage list for the image
 		tag_list = self.scraper.go()
 		
-		fileToSend	= { 'upload[file]' : open(self.image[0], 'rb')}
-		fff = { 'upload[tag_string]' : ' '.join(tag_list),
+		fileToSend	= { 'upload[file]' : open(self.image[0], 'rb'),#(self.image[0], open(self.image[0], 'rb'), 'image/jpeg'),  	
+								#'upload[rating]' : 's',
+								#'upload[source]' : 'http://danbooru.donmai.us/posts/1850562',
+								#'upload[tag_string]' : 'hiiiii',
+								}
+		fff = { #'upload[file]' : #(self.image[0], open(self.image[0], 'rb'), 'image/jpeg'),
+				'upload[tag_string]' : ' '.join(tag_list),
 				'upload[rating]' : 's' }
-		r = requests.post('http://anubis/uploads.json', files=fileToSend, data=fff, auth=HTTPBasicAuth('kotarou', 'MZsTCjO0bVqJgbPZWFNBs8tl7UrwG3wv9TVGKrKNL1U'), verify=False)
+		#print(fileToSend)
+		#r = requests.post('http://anubis/uploads.json', params=fileToSend, auth=HTTPBasicAuth('kotarou', 'MZsTCjO0bVqJgbPZWFNBs8tl7UrwG3wv9TVGKrKNL1U'))
+		r = requests.post('http://anubis/uploads.json', files=fileToSend, data=fff, auth=HTTPBasicAuth('kotarou', 'SUPERSECRETKEYGOESHERE'), verify=False)
 
 		print(r.text)
 

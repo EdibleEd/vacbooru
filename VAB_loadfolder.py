@@ -2,7 +2,7 @@ import argparse
 import re
 import os
 
-import Utility
+#import Utility
 
 # inlining utility here for py2/3 issues
 # Prints if the level of debug printing is greater or equal to this methods threshold to be printed
@@ -21,10 +21,7 @@ class VAB_loadfolder:
     def __init__(self):
         self.image_extensions = ["jpg","png","gif","jpeg"]
         self.debug_level = 5
-    
-    def setImageExtensions(self, extensions):
-        self.image_extensions = extensions
-
+        
     # Gets the file list
     def loadFiles(self, path, mode, regex, danbooru_mode, tumblr_qual):
         

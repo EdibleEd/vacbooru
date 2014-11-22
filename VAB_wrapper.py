@@ -1,8 +1,8 @@
 import VAB_QC
-from VAB_scraper import VAB_scraper
+import VAB_scraper
 import VAB_upload
-import Utility
-from VAB_loadfolder import VAB_loadfolder
+import utility
+import VAB_loadfolder
 import os
 import argparse
 
@@ -13,23 +13,27 @@ class VAB_wrapper:
     
     def __init__(self, args):
         
-        self.folderToLoad = args.path
-        self.mainConf = Utility.loadConfig('config/main.cfg')
-          
+        self.confFolder = "Config"
+        if (args.config == None):
+            with open(os.path.join(os.getcwd(), "Config", "main.conf"), 'r', encoding='utf-8') as mainConfig:
+                mainConf = loadSimpleConfig(config)
+        else:
+            with open(args.config, 'r', encoding='utf-8') as mainConfig:
+                mainConf = loadSimpleConfig(config)
+                self.confFolder = mainConf["configfolder"]
+                
                 
     def loadFolder(self, config):
         loader = VAB_loadfolder()
-        if (config['image_extensions']):
-            loader.setImageExtensions(config['image_extensions'])
-        return loader.loadFiles(config['path'], config['mode'], config['regex'], config['danbooru_mode'], config['tumblr_qual'])
+        if (config.imageExtensions):
+            loader.setImageExtensions(config.imageExtensions)
+        return loader.loadFiles(config.path, config.mode, config.regex, config.danbooru_mode, config.tumblr_qual)
 
-    def scrapeTags(self, files, config, network_config):
-        scraper = VAB_scraper(config['perv_mode'], config['scrape_target'], network_config)
+    def scraperCall(self, files, config):
+        
         # Need error checking here
-        for image in files:
-            scraper.setFile(image)
-            tagList = scraper.go()
-            print(tagList)
+        loader = VAB_scraper(config.pervmode, config.scrapeTarget, files)
+        loader.go()
 
     def QC(self, config):
         pass
@@ -39,30 +43,30 @@ class VAB_wrapper:
 
     def chain(self):
     
-        # Load configs
-        folder_config   = self.mainConf['Folder']
-        folder_config['path'] = self.folderToLoad
+        # Load configs      
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["folder"]), 'r', encoding='utf-8') as folder_conf:
+            folder_config = loadSimpleConfig(folder_conf)
+    
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["scraper"]), 'r', encoding='utf-8') as scraper_conf:
+            scraper_config = loadSimpleConfig(scraper_conf)
+
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["qc"]), 'r', encoding='utf-8') as QC_conf:
+            qc_config = loadSimpleConfig(QC_conf)
+
+        with open(os.path.join(os.getcwd(), self.confFolder, mainConf["upload"]), 'r', encoding='utf-8') as upload_conf:
+            upload_config = loadSimpleConfig(upload_conf)
         
-        scraper_config  = self.mainConf['Scraper']
-        qc_config       = self.mainConf['QC']
-        upload_config   = self.mainConf['Upload']
-        network_config  = self.mainConf['Network']
-
-        # Get the file list that we are going to work with
-        files = self.loadFolder(folder_config)
-
-        print(files)
-
-        self.scrapeTags(files, scraper_config, network_config)
+        files = loadFolder(folder_config)
+        scraperCall(files, scraper_config)
 
 
-        #self.QC(QC_config)
+        QC(QC_config)
 
 
-        #self.upload(upload_config)        
+        upload(upload_config)        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Import and upload a folder of images to vacbooru')
-    parser.add_argument("path", help="Path to folder to load")
-    wrap = VAB_wrapper(parser.parse_args())
+    parser.add_argument("config", help="Path to configuration script")
+    wrap = VAB_wrapper()
     wrap.chain()
