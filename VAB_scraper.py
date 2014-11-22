@@ -14,7 +14,6 @@ import argparse
 import Utility as utl
 from bs4 import BeautifulSoup
 import requests
-import ast
 import json
 
 class VAB_scraper:
@@ -269,8 +268,11 @@ class VAB_scraper:
         temp['tag_string_character'] = metadata['tag_string_character'] 
         temp['tag_string_copyright'] = metadata['tag_string_copyright'] 
         temp['tag_string_general'] = metadata['tag_string_general'] 
-        temp['large_loc'] = 'danbooru.donmai.us/' + metadata['large_file_url'] 
+        temp['large_loc'] = 'http://danbooru.donmai.us/' + metadata['large_file_url'] 
         temp['local_file'] = self.image
+        fin = self.image.rfind('\\')
+        target = self.image[:fin] + '\\' + metadata['md5'] + '.' + metadata['file_ext']
+        temp['target_file'] = target
         return temp
 
     def go(self):

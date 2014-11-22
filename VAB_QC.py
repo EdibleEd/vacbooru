@@ -7,9 +7,42 @@
 # 4. Add or remove existing tags
 # 5. verify checksum is sane
 
+from PIL import Image
+import shutil
+import requests
+import os
+
 class VAB_QC:
 
+    def __init__(self, config):
+        self.bannedTags         = []
+        self.questionableTags   = []
+        self.explicitTags       = []
+        self.proxies = None
+        self.auth = None
 
+    def clean(self, tagset):
+        print(tagset)
+        image = Image.open(tagset['local_file'])
+        x = image.size[0]
+        y = image.size[1]
+        image.close()
+        if x < tagset['width'] or y < tagset ['height']:
+            # The copy we have is smaller than the one hosted on dbu
+            # We want to delete this image, and download the higher res version
+            print('Local file ' + tagset['local_file'] + ' is smaller than remote.')
+            print('Removing old file')
+            os.remove(tagset['local_file'])
+
+            print('Downloading larger file')
+            url = tagset['large_loc']
+            target = tagset['target_file']
+            response = requests.get(url, stream=True)
+            with open(target, 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+            del response
+            print('Download of ' + url + ' complete')
+            
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Clean-up a image tagset. Do not run this file directly: use VAB_wrapper instead')

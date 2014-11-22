@@ -32,14 +32,14 @@ class VAB_wrapper:
             tagList = scraper.go()
             results.append(tagList)
 
-        return tagList
+        return results
 
     def QC(self, data, config):
-        qc = VAB_QC()
+        qc = VAB_QC(config)
 
         results = []
         for tagset in data:
-            cleaned_tagset = QC.clean(tagset)
+            cleaned_tagset = qc.clean(tagset)
             results.append(tagset)
 
         return results
