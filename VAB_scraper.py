@@ -14,6 +14,8 @@ import argparse
 import Utility as utl
 from bs4 import BeautifulSoup
 import requests
+import ast
+import json
 
 class VAB_scraper:
     def __init__(self, pervmode, scrapeTarget, network_config):
@@ -57,8 +59,9 @@ class VAB_scraper:
         #     self.auth = None
 
     def setFile(self, path):
-        self.image = path
-        self.md5 = utl.md5(path)
+        self.image      = path
+        self.md5        = utl.md5(path)
+        self.imageName  = self.md5 + '.' + utl.fileExtension(self.image)
 
     def soupUrlRequest(self, url):
         r = requests.get(url, proxies=self.proxies, auth=self.auth)
@@ -66,19 +69,6 @@ class VAB_scraper:
             return BeautifulSoup(r.text)
         else:
             return None
-  
-    def getPostIDfromMD5(self, service, imageMD5):
-        url = self.urlSearchList[service] + imageMD5
-        r = self.soupUrlRequest(url)
-        if not r == None:
-            # Some images exist as a direct link
-            # But have had their posts removed
-            res = r.article
-            if not res == None:
-                return r.article['id'][5:]
-            else:
-                print("Image exists but has no post")
-        return 0
        
     def getTagList(self, service, postID):
         copyrights = []
@@ -136,19 +126,6 @@ class VAB_scraper:
         for tag in tagList[3]:
             outList.append(tag)
         return outList
-
-
-    def directLinkExists(self, service, query, urlType):
-        url = ''
-        if urlType == 'post':
-            url = self.urlPostList[service] + str(query)
-        elif urlType == 'file':
-            url = self.urlDataList[service] + str(query)
-        r = requests.get(url, proxies=self.proxies, auth=self.auth)
-        if r.status_code == 404:
-            return False
-        else:
-            return True
 
     def scrapeIDfromAggregator(self, service, imageToFind):
         # Scrape the image we are after off one of the aggregator sites
@@ -246,59 +223,132 @@ class VAB_scraper:
 
         return (0,[])
 
+    def getPostIDfromMD5(self, service, imageMD5):
+        url = self.urlSearchList[service] + imageMD5
+        r = self.soupUrlRequest(url)
+        if not r == None:
+            # Some images exist as a direct link
+            # But have had their posts removed
+            res = r.article
+            if not res == None:
+                return r.article['id'][5:]
+            else:
+                print("Image exists but has no post")
+        return 0
+
+    def directLinkExists(self, service, query, urlType):
+        url = ''
+        if urlType == 'post':
+            url = self.urlPostList[service] + str(query)
+        elif urlType == 'file':
+            url = self.urlDataList[service] + str(query)
+        print(url)
+        r = requests.get(url, proxies=self.proxies, auth=self.auth)
+        if r.status_code == 404:
+            return False
+        else:
+            return True
+
+    def parseJSONResponse(self, response):
+        temp = response.contents[0]
+        temp = json.loads(temp)#ast.literal_eval(temp)
+        return temp
+
+    def constructTags(self, metadata):
+        temp = {}
+        temp['id'] = metadata['id'] 
+        temp['source'] = metadata['source'] 
+        temp['md5'] = metadata['md5'] 
+        temp['rating'] = metadata['rating'] 
+        temp['width'] = metadata['image_width'] 
+        temp['height'] = metadata['image_height'] 
+        #temp['tags'] = metadata['tag_string'] 
+        temp['extension'] = metadata['file_ext'] 
+        temp['pool'] = metadata['pool_string'] 
+        temp['tag_string_artist'] = metadata['tag_string_artist'] 
+        temp['tag_string_character'] = metadata['tag_string_character'] 
+        temp['tag_string_copyright'] = metadata['tag_string_copyright'] 
+        temp['tag_string_general'] = metadata['tag_string_general'] 
+        temp['large_loc'] = 'danbooru.donmai.us/' + metadata['large_file_url'] 
+        temp['local_file'] = self.image
+        return temp
 
     def go(self):
-        # We don't mind at this point if the image is already on vacbooru
-        # As it may have new tags that get added by the current user
 
-        fileToTest =    self.md5 + utl.fileExtension(self.image)
-        onDbu =         self.directLinkExists('Danbooru', fileToTest, 'file')
-        postID =        0
-        service =       None
-        tagList =       []
-        
-        if onDbu:
-            # The image exists on dbu with an identical md5 hash
-            print("Scraping Dbu")
+        # Simpler method.
+        # 
+        print(self.md5)
+        dbu_md5FileNameMatch = self.directLinkExists('Danbooru', self.imageName, 'file')
+        if dbu_md5FileNameMatch:
+            # We have found an identical image on danbooru
+            print('File exists on Dbu. Getting post ID')
             postID = self.getPostIDfromMD5('Danbooru', self.md5)
+            print(postID)
+            print('Querying Dbu for tags')
+            idurl = 'http://danbooru.donmai.us/posts/' + postID + '.json'
 
-            # Some images exist viw direct link but have had their posts removed
-            # This normally means the image is flagged for deletion but is not yet removed 
-            if not self.directLinkExists('Danbooru', postID, 'post'):
-                postID = 0
-            else:
-                service = 'Danbooru'
+            post_data = self.soupUrlRequest(idurl)
+            image_metadata = self.parseJSONResponse(post_data)
+
+            result = self.constructTags(image_metadata)
+
+            return result
+
+
+        # # We don't mind at this point if the image is already on vacbooru
+        # # As it may have new tags that get added by the current user
+
+        # fileToTest =    self.md5 + utl.fileExtension(self.image)
+        # onDbu =         self.directLinkExists('Danbooru', fileToTest, 'file')
+        # postID =        0
+        # service =       None
+        # tagList =       []
         
-        if postID == 0:
-            # Either the image isn't on Dbu, or it is but the post is deleted so we can't get the tags
-            # So instead, find the image off a scraping service
-            # Two services are supported: sourceNAO and IQDB
-            #   IQDB puts the user in a queue if under high load
-            #   sourceNAO has a limit of 100 uploads per day for a non-user
-            # Differing user browsing habits will benifit choosing one site over the other
-            #   game cgs or risque -    iqdb
-            #   pixiv or quality -      sourceNAO     
+        # if onDbu:
+        #     # The image exists on dbu with an identical md5 hash
+        #     print("Scraping Dbu")
+        #     postID = self.getPostIDfromMD5('Danbooru', self.md5)
+
+        #     # Some images exist viw direct link but have had their posts removed
+        #     # This normally means the image is flagged for deletion but is not yet removed 
+        #     if not self.directLinkExists('Danbooru', postID, 'post'):
+        #         postID = 0
+        #     else:
+        #         service = 'Danbooru'
+        
+        # if postID == 0:
+        #     # Either the image isn't on Dbu, or it is but the post is deleted so we can't get the tags
+        #     # So instead, find the image off a scraping service
+        #     # Two services are supported: sourceNAO and IQDB
+        #     #   IQDB puts the user in a queue if under high load
+        #     #   sourceNAO has a limit of 100 uploads per day for a non-user
+        #     # Differing user browsing habits will benifit choosing one site over the other
+        #     #   game cgs or risque -    iqdb
+        #     #   pixiv or quality -      sourceNAO     
             
-            if self.scrapeTarget == 'iqdb':
-                postID, service = self.scrapeIDfromAggregator('iqdb', self.image)
+        #     if self.scrapeTarget == 'iqdb':
+        #         postID, service = self.scrapeIDfromAggregator('iqdb', self.image)
             
-            if postID == 0:
-                # The scrape target is sourceNAO or IQDB scrape failed
-                postID, service = self.scrapeIDfromAggregator('sourcenao', self.image)
+        #     if postID == 0:
+        #         # The scrape target is sourceNAO or IQDB scrape failed
+        #         postID, service = self.scrapeIDfromAggregator('sourcenao', self.image)
                 
-        # A > 0 postID means a taglist was found
-        # 0 means no post was found
-        # -1 means a post was found but no tags were (this shouldn't ever occur normally)
-        # -2 means sourceNAO or IQDB returned an unhelpful page like upload limit exceeded
-        if int(postID) <= 0:
-            print("Tag retrieval unsuccessful")
-        else:
-            tagList = self.getTagList(service, postID)  
-            tagList = self.formatTagList(tagList)
-            for tag in tagList:
-                tag.replace(' ', '_')
-            return(tagList)
-        return 0
+        # # A > 0 postID means a taglist was found
+        # # 0 means no post was found
+        # # -1 means a post was found but no tags were (this shouldn't ever occur normally)
+        # # -2 means sourceNAO or IQDB returned an unhelpful page like upload limit exceeded
+        # if int(postID) <= 0:
+        #     print("Tag retrieval unsuccessful")
+        # else:
+        #     tagList = self.getTagList(service, postID)  
+        #     tagList = self.formatTagList(tagList)
+        #     for tag in tagList:
+        #         tag.replace(' ', '_')
+        #     return(tagList)
+        # return 0
+
+
+
     def fun(self):
         # Fun might go here        
         pass

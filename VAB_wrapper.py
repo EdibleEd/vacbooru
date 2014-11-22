@@ -1,4 +1,4 @@
-import VAB_QC
+from VAB_QC import VAB_QC
 from VAB_scraper import VAB_scraper
 import VAB_upload
 import Utility
@@ -26,13 +26,23 @@ class VAB_wrapper:
     def scrapeTags(self, files, config, network_config):
         scraper = VAB_scraper(config['perv_mode'], config['scrape_target'], network_config)
         # Need error checking here
+        results = []
         for image in files:
             scraper.setFile(image)
             tagList = scraper.go()
-            print(tagList)
+            results.append(tagList)
 
-    def QC(self, config):
-        pass
+        return tagList
+
+    def QC(self, data, config):
+        qc = VAB_QC()
+
+        results = []
+        for tagset in data:
+            cleaned_tagset = QC.clean(tagset)
+            results.append(tagset)
+
+        return results
 
     def upload(self, config):
         pass
@@ -51,9 +61,9 @@ class VAB_wrapper:
         # Get the file list that we are going to work with
         files = self.loadFolder(folder_config)
 
-        print(files)
+        tagged_files = self.scrapeTags(files, scraper_config, network_config)
 
-        self.scrapeTags(files, scraper_config, network_config)
+        qc_files = self.QC(tagged_files, upload_config)
 
 
         #self.QC(QC_config)
