@@ -358,17 +358,26 @@ class VAB_scraper:
         temp['pool'] = ''
         temp['file_size'] = 0
         tags = ''
-        for item in metadata['artist']:
-            tags = tags + " " + (item['1']['text'].replace(' ', '_'))
-        temp['tag_string_artist'] = tags 
+        try:
+            for item in metadata['artist']:
+                tags = tags + " " + (item['1']['text'].replace(' ', '_'))
+            temp['tag_string_artist'] = tags 
+        except:
+            temp['tag_string_artist'] = ''
         tags = ''
-        for item in metadata['chcracters']:
-            tags = tags + " " + (item['1']['text'].replace(' ', '_'))
-        temp['tag_string_character'] = tags
+        try:
+            for item in metadata['chcracters']:
+                tags = tags + " " + (item['1']['text'].replace(' ', '_'))
+            temp['tag_string_character'] = tags
+        except:
+            temp['tag_string_character'] = ''
         tags = ''
-        for item in metadata['copyrights']:
-            tags = tags + " " + (item['1']['text'].replace(' ', '_'))
-        temp['tag_string_copyright'] = tags
+        try:
+            for item in metadata['copyrights']:
+                tags = tags + " " + (item['1']['text'].replace(' ', '_'))
+            temp['tag_string_copyright'] = tags
+        except: 
+            temp['tag_string_copyright'] = ''
         tags = ''
         for item in metadata['all_tags']:
             tags = tags + " " + (item['1']['text'].replace(' ', '_')) 
