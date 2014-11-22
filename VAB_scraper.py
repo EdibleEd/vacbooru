@@ -16,12 +16,12 @@ from bs4 import BeautifulSoup
 import requests
 
 class VAB_scraper:
-    def __init__(self, pervmode, scrapeTarget, path):
+    def __init__(self, pervmode, scrapeTarget, network_config):
         self.enablePervMode = pervmode
         safeString = 'safe.'
         if self.enablePervMode:
             safeString = ''
-            fun()
+            #fun()
 
         self.scrapeTarget = scrapeTarget
 
@@ -46,18 +46,19 @@ class VAB_scraper:
         'Danbooru'          : 'http://danbooru.donmai.us/posts/',
         }
 
-        useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('config/network.conf') 
-        if useProxy:
-            self.proxies = { 'http': 'http://%s:%d' % (proxyAddr, proxyPort) }
-            self.auth = requests.auth.HTTPProxyAuth(username, password)
-        else:
-            self.proxies = None
-            self.auth = None
+        self.proxies = None
+        self.auth = None
+        # useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('config/network.conf') 
+        # if useProxy:
+        #     self.proxies = { 'http': 'http://%s:%d' % (proxyAddr, proxyPort) }
+        #     self.auth = requests.auth.HTTPProxyAuth(username, password)
+        # else:
+        #     self.proxies = None
+        #     self.auth = None
 
-        self.imageList = path
-        self.md5List = []
-        for filename in self.imageList:
-            self.md5List.append(utl.md5(filename))
+    def setFile(self, path):
+        self.image = path
+        self.md5 = utl.md5(path)
 
     def soupUrlRequest(self, url):
         r = requests.get(url, proxies=self.proxies, auth=self.auth)
@@ -250,65 +251,57 @@ class VAB_scraper:
         # We don't mind at this point if the image is already on vacbooru
         # As it may have new tags that get added by the current user
 
-        numImages = len(self.imageList)
-        for i in range(numImages):
-            fileToTest =    self.md5List[i] + utl.fileExtension(self.imageList[i])
-            onDbu =         self.directLinkExists('Danbooru', fileToTest, 'file')
-            postID =        0
-            service =       None
-            tagList =       []
-            
-            if onDbu:
-                # The image exists on dbu with an identical md5 hash
-                print("Scraping Dbu")
-                postID = self.getPostIDfromMD5('Danbooru', self.md5List[i])
+        fileToTest =    self.md5 + utl.fileExtension(self.image)
+        onDbu =         self.directLinkExists('Danbooru', fileToTest, 'file')
+        postID =        0
+        service =       None
+        tagList =       []
+        
+        if onDbu:
+            # The image exists on dbu with an identical md5 hash
+            print("Scraping Dbu")
+            postID = self.getPostIDfromMD5('Danbooru', self.md5)
 
-                # Some images exist viw direct link but have had their posts removed
-                # This normally means the image is flagged for deletion but is not yet removed 
-                if not self.directLinkExists('Danbooru', postID, 'post'):
-                    postID = 0
-                else:
-                    service = 'Danbooru'
+            # Some images exist viw direct link but have had their posts removed
+            # This normally means the image is flagged for deletion but is not yet removed 
+            if not self.directLinkExists('Danbooru', postID, 'post'):
+                postID = 0
+            else:
+                service = 'Danbooru'
+        
+        if postID == 0:
+            # Either the image isn't on Dbu, or it is but the post is deleted so we can't get the tags
+            # So instead, find the image off a scraping service
+            # Two services are supported: sourceNAO and IQDB
+            #   IQDB puts the user in a queue if under high load
+            #   sourceNAO has a limit of 100 uploads per day for a non-user
+            # Differing user browsing habits will benifit choosing one site over the other
+            #   game cgs or risque -    iqdb
+            #   pixiv or quality -      sourceNAO     
+            
+            if self.scrapeTarget == 'iqdb':
+                postID, service = self.scrapeIDfromAggregator('iqdb', self.image)
             
             if postID == 0:
-                # Either the image isn't on Dbu, or it is but the post is deleted so we can't get the tags
-                # So instead, find the image off a scraping service
-                # Two services are supported: sourceNAO and IQDB
-                #   IQDB puts the user in a queue if under high load
-                #   sourceNAO has a limit of 100 uploads per day for a non-user
-                # Differing user browsing habits will benifit choosing one site over the other
-                #   game cgs or risque -    iqdb
-                #   pixiv or quality -      sourceNAO     
+                # The scrape target is sourceNAO or IQDB scrape failed
+                postID, service = self.scrapeIDfromAggregator('sourcenao', self.image)
                 
-                if self.scrapeTarget == 'iqdb':
-                    postID, service = self.scrapeIDfromAggregator('iqdb', self.imageList[i])
-                
-                if postID == 0:
-                    # The scrape target is sourceNAO or IQDB scrape failed
-                    postID, service = self.scrapeIDfromAggregator('sourcenao', self.imageList[i])
-                    
-            # A > 0 postID means a taglist was found
-            # 0 means no post was found
-            # -1 means a post was found but no tags were (this shouldn't ever occur normally)
-            # -2 means sourceNAO or IQDB returned an unhelpful page like upload limit exceeded
-            if int(postID) <= 0:
-                print("Tag retrieval unsuccessful")
-            else:
-                tagList = self.getTagList(service, postID)  
-                tagList = self.formatTagList(tagList)
-                for tag in tagList:
-                    tag.replace(' ', '_')
-                return(tagList)
+        # A > 0 postID means a taglist was found
+        # 0 means no post was found
+        # -1 means a post was found but no tags were (this shouldn't ever occur normally)
+        # -2 means sourceNAO or IQDB returned an unhelpful page like upload limit exceeded
+        if int(postID) <= 0:
+            print("Tag retrieval unsuccessful")
+        else:
+            tagList = self.getTagList(service, postID)  
+            tagList = self.formatTagList(tagList)
+            for tag in tagList:
+                tag.replace(' ', '_')
+            return(tagList)
         return 0
     def fun(self):
         # Fun might go here        
         pass
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Scrape the web for a set of passed images",  usage="%(prog)s [options]")
-    parser.add_argument("path", help="Images to load", metavar='I', type=str, nargs='+')
-    parser.add_argument('-e', '--massivePervert', dest='pervMode', action='store_true', help="Enable MASSIVEPERVERT mode aka non-safe scraping")
-    parser.add_argument('-s', '--source', dest='scrapeTarget', type=str, default='iqdb', help="Select the service to scrape first: idqd (iqdb) or sourceNAO (sourenao)" )
-    args = parser.parse_args()
-    loader = VAB_scraper(args.pervMode, args.scrapeTarget, args.path)
-    loader.go()
+    parser = argparse.ArgumentParser(description="Don't run this file by itself. Use VAB_wrapper instead")
