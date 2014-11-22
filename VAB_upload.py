@@ -37,7 +37,6 @@ class VAB_upload:
 				'upload[tag_string]' : ' '.join(tag_list),
 				'upload[rating]' : 's' }
 		#print(fileToSend)
-		#r = requests.post('http://anubis/uploads.json', params=fileToSend, auth=HTTPBasicAuth('kotarou', 'MZsTCjO0bVqJgbPZWFNBs8tl7UrwG3wv9TVGKrKNL1U'))
 		r = requests.post('http://anubis/uploads.json', files=fileToSend, data=fff, auth=HTTPBasicAuth('kotarou', 'SUPERSECRETKEYGOESHERE'), verify=False)
 
 		print(r.text)
