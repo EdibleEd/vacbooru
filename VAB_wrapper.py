@@ -67,12 +67,15 @@ class VAB_wrapper:
 
         # Get the file list that we are going to work with
         files = self.loadFolder(folder_config)
+        for image in files:
+            tagged_file = self.scrapeTags([image], scraper_config, network_config, dbu_config)
+            qc_file = self.QC(tagged_file, upload_config)
+            self.upload(qc_file, upload_config)   
+        #tagged_files = self.scrapeTags(files, scraper_config, network_config, dbu_config)
 
-        tagged_files = self.scrapeTags(files, scraper_config, network_config, dbu_config)
+        #qc_files = self.QC(tagged_files, upload_config)
 
-        qc_files = self.QC(tagged_files, upload_config)
-
-        self.upload(qc_files, upload_config)        
+        #self.upload(qc_files, upload_config)        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Import and upload a folder of images to vacbooru')

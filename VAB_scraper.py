@@ -75,7 +75,7 @@ class VAB_scraper:
         else:
              r = requests.get(url)
         if r.status_code == 200:
-            return BeautifulSoup(r.text)
+            return BeautifulSoup(r.text, "html5lib")
         else:
             return None
        
@@ -256,7 +256,11 @@ class VAB_scraper:
 
     def parseJSONResponse(self, response):
         temp = response.contents[0]
-        temp = json.loads(temp)#ast.literal_eval(temp)
+        try:
+            temp = json.loads(temp, encoding='shift_jis')#ast.literal_eval(temp)
+        except:
+            print("Exception parsing JSON. Porbably because of japanese characters on the page. Skipping file (TODO: fix this)")
+            return 0
         return temp
 
     def constructTags(self, metadata):
@@ -338,6 +342,8 @@ class VAB_scraper:
 
             post_data = self.soupUrlRequest(idurl)
             image_metadata = self.parseJSONResponse(post_data)
+            if image_metadata == 0:
+                return 0
 
             result = self.constructTags(image_metadata)
             print('-----------------------------------------------')
