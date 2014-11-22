@@ -279,54 +279,60 @@ class VAB_scraper:
             temp['flag'] = 1
         else:
             temp['flag'] = 0
+
+        if metadata['is_pending'] == True:
+            print("This file is yet to be approved on danbooru")
+            print("Hence, it will show as malformed and will be redownloaded, even if the file is fine")
+
         return temp
 
     def go(self):
 
         # Simpler method.
         # 
+        print('-----------------------------------------------')
         dbu_md5FileNameMatch = self.directLinkExists('Danbooru', self.imageName, 'file')
         if not dbu_md5FileNameMatch:
             # We have failed to find using the generated md5
             # Try again, with the md5 from the file name
-            print('Generated md5 cannot find file')
+            #print('Generated md5 cannot find file')
             a = self.image.rfind('\\')+1
             b = self.image.rfind('.')
             md5 = self.image[a:]
             print(md5)
             dbu_md5FileNameMatch = self.directLinkExists('Danbooru', md5, 'file')
             if dbu_md5FileNameMatch:
-                print('File name md5 finds file successfully. Updating known md5')
+                #print('File name md5 finds file successfully. Updating known md5')
                 a = md5.rfind('.')
                 self.md5 = md5[:a]
                 self.flag = True
         
         if dbu_md5FileNameMatch:
             # We have found an identical image on danbooru
-            print('File exists on Dbu. Getting post ID')
+            #print('File exists on Dbu. Getting post ID')
             postID = self.getPostIDfromMD5('Danbooru', self.md5)
             if postID == 0 and "sample" in self.image:
-                print("Sample image found. Attempting to find original image")
+                #print("Sample image found. Attempting to find original image")
                 # We have the sample version of the image
                 a = self.image.rfind('-')+1
                 b = self.image.rfind('.')
                 brutemd5 = self.image[a:b]
                 postID = self.getPostIDfromMD5('Danbooru', brutemd5)
                 if postID != 0:
-                    print("Original post found. Updating.")
+                    #print("Original post found. Updating.")
                     self.md5 = brutemd5
 
-            print('Querying Dbu for tags')
+            #print('Querying Dbu for tags')
             idurl = 'http://danbooru.donmai.us/posts/' + postID + '.json'
 
             post_data = self.soupUrlRequest(idurl)
             image_metadata = self.parseJSONResponse(post_data)
 
             result = self.constructTags(image_metadata)
-
+            print('-----------------------------------------------')
             return result
         else:
-            print('Image md5 malformed or unfindable')
+            print('Image not findable on danbooru')
             return 0
 
         # # We don't mind at this point if the image is already on vacbooru

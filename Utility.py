@@ -28,7 +28,7 @@ def sanitizeLoadedConfig(configDict):
 # proxyport: 8080
 
 def loadConfig(configFile):
-    print(configFile)
+    #print(configFile)
     config = configparser.RawConfigParser()
     config.read(configFile)
     

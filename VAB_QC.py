@@ -11,6 +11,7 @@ from PIL import Image
 import shutil
 import requests
 import os
+from bs4 import BeautifulSoup
 
 class VAB_QC:
 
@@ -21,16 +22,37 @@ class VAB_QC:
         self.proxies = None
         self.auth = None
 
+    def soupUrlRequest(self, url):
+        r = requests.get(url, proxies=self.proxies, auth=self.auth)
+        if r.status_code == 200:
+            return BeautifulSoup(r.text)
+        else:
+            return None
+
+    def getPostIDfromMD5(self, imageMD5):
+        url = 'http://anubis/posts?utf8=%E2%9C%93&tags=md5%3A' + imageMD5
+        r = self.soupUrlRequest(url)
+        if not r == None:
+            # Some images exist as a direct link
+            # But have had their posts removed
+            res = r.article
+            if not res == None:
+                print('Image is on vacbooru')
+                return res['id'][5:]
+            else:
+                print("Image is not on vacbooru")
+        return 0
+
     def clean(self, tagset):
+        print('=========================================================')
         print(tagset)
         image = Image.open(tagset['local_file'])
         x = image.size[0]
         y = image.size[1]
         size = os.path.getsize(tagset['local_file'])
         image.close()
-        print(size, tagset['file_size'])
-        print(x, tagset['width'], y, tagset ['height'])
-        if x < tagset['width'] or y < tagset ['height'] or tagset['flag'] == 1:
+
+        if x < tagset['width'] or y < tagset ['height'] or tagset['flag'] == 1 or size != int(tagset['file_size']):
             # The copy we have is smaller than the one hosted on dbu
             # We want to delete this image, and download the higher res version
             print('Local file ' + tagset['local_file'] + ' does not correctly match target.')
@@ -45,6 +67,18 @@ class VAB_QC:
                 shutil.copyfileobj(response.raw, out_file)
             del response
             print('Download of ' + url + ' complete')
+
+
+        result = tagset
+        # At this point, the image is fine to upload, unless it already exists on the server
+        if self.getPostIDfromMD5(tagset['md5']) == 0:
+            # The image does not exist. We can look at uploading it
+            return result
+        else:
+            # The image exists. We don't need to upload it.
+            # Eventually, we will add functionality here to note multiple people have this file
+            print("Image already uploaded. Ignoring")
+        print('=========================================================')
             
 
 if __name__ == '__main__':
