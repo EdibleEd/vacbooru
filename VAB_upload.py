@@ -9,33 +9,42 @@ import Utility as utl
 import requests
 from requests.auth import HTTPBasicAuth
 from bs4 import BeautifulSoup
+import os
+import sys
 
 # Actually builds the post request, then executes it on vacbooru
 class VAB_upload:
-	def __init__(self, image):
-		self.image = image
-		self.scraper = VAB_scraper.VAB_scraper(False, 'iqdb', image)
-		useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('config/network.conf') 
-		if useProxy:
-			self.proxies = { 'http': 'http://%s:%d' % (proxyAddr, proxyPort) }
-			self.auth = requests.auth.HTTPProxyAuth(username, password)
-		else:
-			self.proxies = None
-			self.auth = None
+	def __init__(self, config):
+		self.config = config
+		self.user = config['username']
+		self.api_token = config['api_token']
+		print('Uploader init')
 
-
-	def go(self):
+	def go(self, tagset):
 		# First thing to do, is retrieve a tage list for the image
-		tag_list = self.scraper.go()
-		
-		fileToSend	= { 'upload[file]' : open(self.image[0], 'rb')}
-		fff = { 'upload[tag_string]' : ' '.join(tag_list),
-				'upload[rating]' : 's' }
+		f = open(tagset['local_file'], 'rb')
+		fileToSend	= { 'upload[file]' : f}
+		fff = { 'upload[tag_string]' : tagset['tag_string_general'],
+				'upload[rating]' : tagset['rating'], 
+				'upload[source]' : tagset['source']}
 
-		r = requests.post('http://anubis/uploads.json', files=fileToSend, data=fff, auth=HTTPBasicAuth('kotarou', 'SUPERSECRETKEYGOESHERE'), verify=False)
+		r = requests.post('http://anubis/uploads.json', files=fileToSend, data=fff, auth=HTTPBasicAuth(self.user, self.api_token), verify=False)
+		f.close()
+		print("Uploaded!")
 
-		print(r.text)
-	
+		# Now that we have uploaded it, lets move it to a new location, so we don't reupload it later
+		a = tagset['local_file'].rfind('\\')
+		newDir = tagset['local_file'][:a] + '\\vab_successfulupload'
+		try:
+			if not os.path.exists(newDir):
+				os.makedirs(newDir)
+			print(tagset['local_file'])
+			print(newDir + '\\' + tagset['local_file'][a+1:])
+			os.rename(tagset['local_file'], newDir + '\\' + tagset['local_file'][a+1:])
+		except:
+			print('File ' + tagset['local_file'][a+1:] + ' could not be moved')
+			print("Error:", sys.exc_info()[0])
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description="Upload an image to the local dbu server",  usage="%(prog)s [options]")

@@ -28,7 +28,7 @@ class VAB_loadfolder:
     # Gets the file list
     def loadFiles(self, path, mode, regex, danbooru_mode, tumblr_qual):
         
-        path_to_file = os.path.join(os.getcwd(), path)     
+        path_to_file = os.path.join(os.getcwd(), path)   
         rel_path = True
         output_list = []
         if not(os.access(os.path.join(os.getcwd(), path), os.R_OK)):
@@ -39,32 +39,32 @@ class VAB_loadfolder:
                 print("Folder not found " + path)
 
         for root, dirs, files in os.walk(path_to_file):
-            for name in files:
-                if (mode == "regex"):
-                    if self.onlyRegex(name, regex):
-                        output_list.append(os.path.join(root, name))            
+            if "vab_successfulupload" not in root:
+                for name in files:
+                    if (mode == "regex"):
+                        if self.onlyRegex(name, regex):
+                            output_list.append(os.path.join(root, name))            
 
-                elif (mode == "danbooru"):
-                    if self.danbooru(name, danbooru_mode):
-                        output_list.append(os.path.join(root, name))
-                
-                elif (mode == "tumblr"):
-                    if self.tumblr(name, tumblr_qual):
-                        output_list.append(os.path.join(root, name))
-                
-                elif (mode == "pixiv"):
-                    if self.pixiv(name):
-                        output_list.append(os.path.join(root, name))
+                    elif (mode == "danbooru"):
+                        if self.danbooru(name, danbooru_mode):
+                            output_list.append(os.path.join(root, name))
+                    
+                    elif (mode == "tumblr"):
+                        if self.tumblr(name, tumblr_qual):
+                            output_list.append(os.path.join(root, name))
+                    
+                    elif (mode == "pixiv"):
+                        if self.pixiv(name):
+                            output_list.append(os.path.join(root, name))
 
-                # Loads any file regardless of extensions (IE not just known image extensions), unsafe
-                elif (mode == "all"):
-                    output_list.append(os.path.join(root, name))
-                
-                # Default is any image file               
-                else:
-                    if self.onlyImage(os.path.join(root, name)):
+                    # Loads any file regardless of extensions (IE not just known image extensions), unsafe
+                    elif (mode == "all"):
                         output_list.append(os.path.join(root, name))
-
+                    
+                    # Default is any image file               
+                    else:
+                        if self.onlyImage(os.path.join(root, name)):
+                            output_list.append(os.path.join(root, name))
         return(output_list)
     
     # Provide it with a different set of acceptable image types

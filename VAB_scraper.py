@@ -15,9 +15,10 @@ import Utility as utl
 from bs4 import BeautifulSoup
 import requests
 import json
+from requests.auth import HTTPBasicAuth
 
 class VAB_scraper:
-    def __init__(self, pervmode, scrapeTarget, network_config):
+    def __init__(self, pervmode, scrapeTarget, network_config, auth_config):
         self.enablePervMode = pervmode
         safeString = 'safe.'
         if self.enablePervMode:
@@ -49,6 +50,11 @@ class VAB_scraper:
 
         self.proxies = None
         self.auth = None
+
+        self.user = auth_config['username']
+        self.api_token = auth_config['api_token']
+
+
         # useProxy, proxyAddr, proxyPort, username, password  = utl.loadNetworkConfig('config/network.conf') 
         # if useProxy:
         #     self.proxies = { 'http': 'http://%s:%d' % (proxyAddr, proxyPort) }
@@ -64,7 +70,10 @@ class VAB_scraper:
         self.flag       = False
 
     def soupUrlRequest(self, url):
-        r = requests.get(url, proxies=self.proxies, auth=self.auth)
+        if 'danbooru' in url:
+            r = requests.get(url, auth=HTTPBasicAuth(self.user, self.api_token))#, proxies=self.proxies, auth=self.auth)
+        else:
+             r = requests.get(url)
         if r.status_code == 200:
             return BeautifulSoup(r.text)
         else:
@@ -243,11 +252,7 @@ class VAB_scraper:
         elif urlType == 'file':
             url = self.urlDataList[service] + str(query)
         print(url)
-        r = requests.get(url, proxies=self.proxies, auth=self.auth)
-        if r.status_code != 200:
-            return False
-        else:
-            return True
+        return self.soupUrlRequest(url) != None
 
     def parseJSONResponse(self, response):
         temp = response.contents[0]
@@ -272,6 +277,7 @@ class VAB_scraper:
         temp['tag_string_general'] = metadata['tag_string_general'] 
         temp['large_loc'] = 'http://danbooru.donmai.us/' + metadata['large_file_url'] 
         temp['local_file'] = self.image
+        temp['tag_string'] = metadata['tag_string'] 
         fin = self.image.rfind('\\')
         target = self.image[:fin] + '\\' + metadata['md5'] + '.' + metadata['file_ext']
         temp['target_file'] = target
@@ -311,18 +317,23 @@ class VAB_scraper:
             # We have found an identical image on danbooru
             #print('File exists on Dbu. Getting post ID')
             postID = self.getPostIDfromMD5('Danbooru', self.md5)
-            if postID == 0 and "sample" in self.image:
-                #print("Sample image found. Attempting to find original image")
-                # We have the sample version of the image
-                a = self.image.rfind('-')+1
-                b = self.image.rfind('.')
-                brutemd5 = self.image[a:b]
-                postID = self.getPostIDfromMD5('Danbooru', brutemd5)
-                if postID != 0:
-                    #print("Original post found. Updating.")
-                    self.md5 = brutemd5
+            if postID == 0:
+                if "sample" in self.image:
+                    #print("Sample image found. Attempting to find original image")
+                    # We have the sample version of the image
+                    a = self.image.rfind('-')+1
+                    b = self.image.rfind('.')
+                    brutemd5 = self.image[a:b]
+                    postID = self.getPostIDfromMD5('Danbooru', brutemd5)
+                    if postID != 0:
+                        #print("Original post found. Updating.")
+                        self.md5 = brutemd5
+                else:
+                    # We have the image, but named differently
+                    print("Shits gone wrong")
 
             #print('Querying Dbu for tags')
+            print(postID)
             idurl = 'http://danbooru.donmai.us/posts/' + postID + '.json'
 
             post_data = self.soupUrlRequest(idurl)

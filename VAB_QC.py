@@ -17,8 +17,8 @@ class VAB_QC:
 
     def __init__(self, config):
         self.bannedTags         = []
-        self.questionableTags   = []
-        self.explicitTags       = []
+        self.questionableTags   = ['nude']
+        self.explicitTags       = ['sex']
         self.proxies = None
         self.auth = None
 
@@ -43,9 +43,9 @@ class VAB_QC:
                 print("Image is not on vacbooru")
         return 0
 
-    def clean(self, tagset):
+    def fileCheck(self, tagset):
         print('=========================================================')
-        print(tagset)
+        #print(tagset)
         image = Image.open(tagset['local_file'])
         x = image.size[0]
         y = image.size[1]
@@ -67,19 +67,56 @@ class VAB_QC:
                 shutil.copyfileobj(response.raw, out_file)
             del response
             print('Download of ' + url + ' complete')
+            tagset['local_file'] = tagset['target_file']
+        return 1
 
+    def tagCheck(self, tagset):
+        if len(tagset['tag_string']) < 2:
+            return 0
+        for tag in self.bannedTags:
+            for applied_tag in tagset['tag_string'].split(' '):
+                if tag == applied_tag:
+                    return 0
+        return 1
 
-        result = tagset
-        # At this point, the image is fine to upload, unless it already exists on the server
+    def safeCheck(self, tagset):
+        res = 1
+        if tagset['rating'] == 's':
+            for tag in self.questionableTags:
+                for applied_tag in tagset['tag_string'].split(' '):
+                    if tag == applied_tag:
+                        tagset['rating'] == 'q'
+                        res = 2
+        if tagset['rating'] == 'q':
+            for tag in self.explicitTags:
+                for applied_tag in tagset['tag_string'].split(' '):
+                    if tag == applied_tag:
+                        tagset['rating'] == 'e'
+                        res = 3
+        return res
+
+    def uploadCheck(self, tagset):
         if self.getPostIDfromMD5(tagset['md5']) == 0:
             # The image does not exist. We can look at uploading it
-            return result
+            return 1
         else:
-            # The image exists. We don't need to upload it.
-            # Eventually, we will add functionality here to note multiple people have this file
+            return 0
+
+    def clean(self, tagset):
+
+        if self.safeCheck(tagset) != 1:
+            print("File rating modified")
+
+        if self.fileCheck(tagset) != 1:
+            print("File checking failed.")
+        elif self.tagCheck(tagset) != 1:
+            print("Modifying tags failed.")
+        elif self.uploadCheck(tagset) != 1:
             print("Image already uploaded. Ignoring")
-        print('=========================================================')
-            
+        else:
+            return tagset
+        #Failure case
+        return 0
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Clean-up a image tagset. Do not run this file directly: use VAB_wrapper instead')
