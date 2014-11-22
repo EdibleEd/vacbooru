@@ -7,3 +7,8 @@ beautifulsoup4
 requests
 pillow
 html5lib
+xmltodict
+
+
+maybe: 
+untangle

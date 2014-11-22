@@ -53,7 +53,7 @@ class VAB_QC:
         size = os.path.getsize(tagset['local_file'])
         image.close()
 
-        if x < tagset['width'] or y < tagset ['height'] or tagset['flag'] == 1 or size != int(tagset['file_size']):
+        if x < tagset['width'] or y < tagset ['height'] or tagset['flag'] == 1:# or size != int(tagset['file_size']):
             # The copy we have is smaller than the one hosted on dbu
             # We want to delete this image, and download the higher res version
             print('Local file ' + tagset['local_file'] + ' does not correctly match target.')
@@ -83,13 +83,17 @@ class VAB_QC:
         temp = tagset['tag_string_general']
         # Merge the tags for the dbu format
         for tag in tagset['tag_string_artist'].split(' '):
-            temp = temp + " artist:" + tag
+            if len(tag) > 1:
+                temp = temp + " artist:" + tag
         for tag in tagset['tag_string_character'].split(' '):
-            temp = temp + " character:" + tag
+            if len(tag) > 1:
+                temp = temp + " character:" + tag
         for tag in tagset['tag_string_copyright'].split(' '):
-            temp = temp + " copyright:" + tag
+            if len(tag) > 1:
+                temp = temp + " copyright:" + tag
 
         tagset['tag_string'] = temp
+        print(tagset)
         return tagset    
 
     def safeCheck(self, tagset):

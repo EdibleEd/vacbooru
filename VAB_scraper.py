@@ -14,8 +14,11 @@ import argparse
 import Utility as utl
 from bs4 import BeautifulSoup
 import requests
+import urllib.request #replace this asap
 import json
 from requests.auth import HTTPBasicAuth
+import sys
+import xmltodict
 
 class VAB_scraper:
     def __init__(self, pervmode, scrapeTarget, network_config, auth_config):
@@ -75,7 +78,11 @@ class VAB_scraper:
         else:
              r = requests.get(url)
         if r.status_code == 200:
-            return BeautifulSoup(r.text, "html5lib")
+            try:
+                return BeautifulSoup(r.text, "html5lib")
+            except:
+                print('HTML encoding error. Skipping file')
+                return None
         else:
             return None
        
@@ -256,10 +263,26 @@ class VAB_scraper:
 
     def parseJSONResponse(self, response):
         temp = response.contents[0]
+        temp = temp.encode(encoding='ascii',errors='replace')
         try:
-            temp = json.loads(temp, encoding='shift_jis')#ast.literal_eval(temp)
+            temp = json.load(temp.decode("utf-8"))#ast.literal_eval(temp)
         except:
-            print("Exception parsing JSON. Porbably because of japanese characters on the page. Skipping file (TODO: fix this)")
+            print("Exception parsing JSON. Retry with xml")
+            return 0
+        return temp
+
+    def parseJSONResponse2(self, url):
+        #print(response)
+        results = json.loads(urllib.request.urlopen(url).read().decode("utf-8"))
+        return results
+
+
+    def parseXMLResponse(self, response):
+        temp = response.contents[0]
+        try:
+            temp = xmltodict.parse(temp)#ast.literal_eval(temp)
+        except:
+            print("Exception parsing XML. Scraping from html directly")
             return 0
         return temp
 
@@ -296,6 +319,74 @@ class VAB_scraper:
 
         return temp
 
+    def constructTags2(self, metadata):
+        temp = {}
+        if metadata['lastrunstatus'] != 'success':
+            print("Kimono labs scrape broke")
+            return {}
+        metadata = metadata['results']
+        print(metadata['all_tags'][1])
+        
+        temp['id'] = metadata['id'][0]['1']
+        temp['source'] = metadata['source'][0]['1']['href']
+        temp['md5'] = self.md5
+        try:
+            print(metadata['rating'][0]['1'])
+            if metadata['rating'][0]['1'] == 'Safe':
+                temp['rating'] = 's'
+            elif metadata['rating'][0]['1'] == 'Questionable':
+                temp['rating'] = 'q'
+            else:
+                temp['rating'] = 'e'
+        except:
+            temp['rating'] = 's'
+        try:
+            res = metadata['resolution'][0]['1']['text']
+            a = res.rfind('x')
+            x = int(res[a+1:])
+            y = int(res[:a])
+            temp['width'] = x
+            temp['height'] = y
+        except:
+            temp['width'] = 100
+            temp['height'] = 100
+        tags = ''
+        for item in metadata['tags']:
+            tags = tags + " " + item['1']['text']
+        temp['tag_string'] = tags
+        temp['extension'] = utl.fileExtension(self.image)
+        temp['pool'] = ''
+        temp['file_size'] = 0
+        tags = ''
+        for item in metadata['artist']:
+            tags = tags + " " + (item['1']['text'].replace(' ', '_'))
+        temp['tag_string_artist'] = tags 
+        tags = ''
+        for item in metadata['chcracters']:
+            tags = tags + " " + (item['1']['text'].replace(' ', '_'))
+        temp['tag_string_character'] = tags
+        tags = ''
+        for item in metadata['copyrights']:
+            tags = tags + " " + (item['1']['text'].replace(' ', '_'))
+        temp['tag_string_copyright'] = tags
+        tags = ''
+        for item in metadata['all_tags']:
+            tags = tags + " " + (item['1']['text'].replace(' ', '_')) 
+        temp['tag_string_general'] = tags 
+        temp['large_loc'] = 'http://danbooru.donmai.us/data/' + self.md5 + '.' + utl.fileExtension(self.image)
+        temp['local_file'] = self.image
+
+        target = temp['local_file']
+        temp['target_file'] = target
+        if self.flag:
+            temp['flag'] = 1
+        else:
+            temp['flag'] = 0
+
+        #print(temp)
+        return temp
+
+
     def go(self):
 
         # Simpler method.
@@ -309,7 +400,7 @@ class VAB_scraper:
             a = self.image.rfind('\\')+1
             b = self.image.rfind('.')
             md5 = self.image[a:]
-            print(md5)
+            #print(md5)
             dbu_md5FileNameMatch = self.directLinkExists('Danbooru', md5, 'file')
             if dbu_md5FileNameMatch:
                 #print('File name md5 finds file successfully. Updating known md5')
@@ -334,19 +425,34 @@ class VAB_scraper:
                         self.md5 = brutemd5
                 else:
                     # We have the image, but named differently
-                    print("Shits gone wrong")
+                    print("Shits gone wrong on: " + self.image)
+                    return 0
 
             #print('Querying Dbu for tags')
-            print(postID)
-            idurl = 'http://danbooru.donmai.us/posts/' + postID + '.json'
+            #print(postID)
+            idurl   = 'http://danbooru.donmai.us/posts/' + postID + '.json'
+            idurl2  = 'http://danbooru.donmai.us/posts/' + postID + '.xml'
+            idurl3  = 'https://www.kimonolabs.com/api/34xtvd52?apikey=913520d0b372fd125c0c4bb579b73d11&kimpath2=' + postID
 
-            post_data = self.soupUrlRequest(idurl)
-            image_metadata = self.parseJSONResponse(post_data)
+
+            #post_data = self.soupUrlRequest(idurl)
+            image_metadata = 0 #self.parseJSONResponse(post_data)
+            
+            # Don't bother with the XML for now.
+            # if image_metadata == 0:
+            #     post_data = self.soupUrlRequest(idurl2)
+            #     image_metadata = self.parseXMLResponse(post_data)
+            
             if image_metadata == 0:
-                return 0
-
-            result = self.constructTags(image_metadata)
+                # The page is being stubborn and won't load using local resources
+                # So, lets use an external one!
+                image_metadata = self.parseJSONResponse2(idurl3)
+                result = self.constructTags2(image_metadata)
+            else:
+                result = self.constructTags(image_metadata)
             print('-----------------------------------------------')
+            if len(result) < 2:
+                return 0 
             return result
         else:
             print('Image not findable on danbooru')
