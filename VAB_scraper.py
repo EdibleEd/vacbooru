@@ -289,7 +289,10 @@ class VAB_scraper:
     def constructTags(self, metadata):
         temp = {}
         temp['id'] = metadata['id'] 
-        temp['source'] = metadata['source'] 
+        try:
+            temp['source'] = metadata['source'] 
+        except:
+            temp['source'] = 'http://danbooru.donmai.us/posts/' + temp['id']
         temp['md5'] = metadata['md5'] 
         temp['rating'] = metadata['rating'] 
         temp['width'] = metadata['image_width'] 
@@ -328,7 +331,10 @@ class VAB_scraper:
         print(metadata['all_tags'][1])
         
         temp['id'] = metadata['id'][0]['1']
-        temp['source'] = metadata['source'][0]['1']['href']
+        try:
+            temp['source'] = metadata['source'][0]['1']['href']
+        except:
+            temp['source'] = 'http://danbooru.donmai.us/posts/' + temp['id']
         temp['md5'] = self.md5
         try:
             print(metadata['rating'][0]['1'])
@@ -387,10 +393,7 @@ class VAB_scraper:
 
         target = temp['local_file']
         temp['target_file'] = target
-        if self.flag:
-            temp['flag'] = 1
-        else:
-            temp['flag'] = 0
+        temp['flag'] = 0
 
         #print(temp)
         return temp
