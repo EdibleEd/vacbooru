@@ -7,6 +7,11 @@ class AbstractScraper(object):
     def init(self, input):
         """Setup the scraper"""
         return
+
+	@abc.abstractmethod
+    def setLocalFile(self, target):
+    	"""Given an image path, set a local var such that the local_file tag can be applied"""
+    	return        
     
     @abc.abstractmethod
     def findPostByMD5(self, md5):
