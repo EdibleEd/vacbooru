@@ -208,10 +208,13 @@ class VAB_scraper:
                     return (-2,[])
             except:
                 pass
-
-            firstSourceLoc = soup.select('.result')[0].select('.linkify')[-2]['href']
-            print("Image source is: " + firstSourceLoc)
-            print(firstSourceLoc)
+            try:
+                firstSourceLoc = soup.select('.result')[0].select('.linkify')[-2]['href']
+                print("Image source is: " + firstSourceLoc)
+                print(firstSourceLoc)
+            except:
+                print('No result found')
+                return (0,[])
             if 'pixiv' in firstSourceLoc:
                 # We want to try find some english tags if possible
                 # So we'll check the second result for danbooru links
@@ -220,11 +223,14 @@ class VAB_scraper:
                 if not secondSource == None:
                     if 'have been hidden' not in secondSource:
                         # A result is worth checking for english tags!
-                        secondSourceLoc = secondSource.find_all('a')[1]['href']
-                        if 'danbooru' in secondSourceLoc:
-                            # The second result contained a useful danbooru link. Lets use it
-                            print("Roughly matching dbu source: " + secondSourceLoc)
-                            postID = secondSourceLoc[36:]
+                        try:
+                            secondSourceLoc = secondSource.find_all('a')[1]['href']
+                            if 'danbooru' in secondSourceLoc:
+                                # The second result contained a useful danbooru link. Lets use it
+                                print("Roughly matching dbu source: " + secondSourceLoc)
+                                postID = secondSourceLoc[36:]
+                        except:
+                            print('Only one source found')
                 if postID == 0:
                     # We need to look on pixiv
                     postID = firstSourceLoc[61:]
@@ -273,7 +279,11 @@ class VAB_scraper:
 
     def parseJSONResponse2(self, url):
         #print(response)
-        results = json.loads(urllib.request.urlopen(url).read().decode("utf-8"))
+        try:
+            results = json.loads(urllib.request.urlopen(url).read().decode("utf-8"))
+        except:
+            print("Http error. This file will need to be retried")
+            return 0
         return results
 
 
@@ -301,10 +311,22 @@ class VAB_scraper:
         temp['extension'] = metadata['file_ext'] 
         temp['pool'] = metadata['pool_string'] 
         temp['file_size'] = metadata['file_size'] 
-        temp['tag_string_artist'] = metadata['tag_string_artist'] 
-        temp['tag_string_character'] = metadata['tag_string_character'] 
-        temp['tag_string_copyright'] = metadata['tag_string_copyright'] 
-        temp['tag_string_general'] = metadata['tag_string_general'] 
+        try:
+            temp['tag_string_artist'] = metadata['tag_string_artist'] 
+        except:
+            temp['tag_string_artist'] = ''
+        try:
+            temp['tag_string_character'] = metadata['tag_string_character'] 
+        except:
+            temp['tag_string_character'] = ''
+        try:
+            temp['tag_string_copyright'] = metadata['tag_string_copyright'] 
+        except:
+            temp['tag_string_copyright'] = ''
+        try:
+            temp['tag_string_general'] = metadata['tag_string_general'] 
+        except:
+            temp['tag_string_general'] = ''
         temp['large_loc'] = 'http://danbooru.donmai.us/' + metadata['large_file_url'] 
         temp['local_file'] = self.image
         temp['tag_string'] = metadata['tag_string'] 
@@ -322,7 +344,7 @@ class VAB_scraper:
 
         return temp
 
-    def constructTags2(self, metadata):
+    def constructTags2(self, metadata, flag=0):
         temp = {}
         if metadata['lastrunstatus'] != 'success':
             print("Kimono labs scrape broke")
@@ -393,13 +415,13 @@ class VAB_scraper:
 
         target = temp['local_file']
         temp['target_file'] = target
-        temp['flag'] = 0
+        temp['flag'] = flag
 
         #print(temp)
         return temp
 
 
-    def go(self):
+    def goDbu(self):
 
         # Simpler method.
         # 
@@ -447,8 +469,8 @@ class VAB_scraper:
             idurl3  = 'https://www.kimonolabs.com/api/34xtvd52?apikey=913520d0b372fd125c0c4bb579b73d11&kimpath2=' + postID
 
 
-            #post_data = self.soupUrlRequest(idurl)
-            image_metadata = 0 #self.parseJSONResponse(post_data)
+            post_data = self.soupUrlRequest(idurl)
+            image_metadata = self.parseJSONResponse(post_data)
             
             # Don't bother with the XML for now.
             # if image_metadata == 0:
@@ -456,9 +478,11 @@ class VAB_scraper:
             #     image_metadata = self.parseXMLResponse(post_data)
             
             if image_metadata == 0:
-                # The page is being stubborn and won't load using local resources
+                # The page is being stubborn and won't load using danbooru's api
                 # So, lets use an external one!
                 image_metadata = self.parseJSONResponse2(idurl3)
+                if image_metadata == 0:
+                    return 0
                 result = self.constructTags2(image_metadata)
             else:
                 result = self.constructTags(image_metadata)
@@ -469,6 +493,27 @@ class VAB_scraper:
         else:
             print('Image not findable on danbooru')
             return 0
+
+
+    def goScrape(self):
+
+        postID = 0
+        postID, service = self.scrapeIDfromAggregator('iqdb', self.image)
+
+        if postID == 0:
+            postID, service = self.scrapeIDfromAggregator('sourcenao', self.image)
+
+        if service == 'pixiv':
+            print('Image only found on pixiv')
+            return 0
+
+        if postID != 0 and service == 'Danbooru':
+            idurl3  = 'https://www.kimonolabs.com/api/34xtvd52?apikey=913520d0b372fd125c0c4bb579b73d11&kimpath2=' + postID
+            image_metadata = self.parseJSONResponse2(idurl3)
+            if image_metadata == 0:
+                return 0
+            return self.constructTags2(image_metadata, 2)
+
 
         # # We don't mind at this point if the image is already on vacbooru
         # # As it may have new tags that get added by the current user
