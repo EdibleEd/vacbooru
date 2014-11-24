@@ -8,6 +8,7 @@ requests
 pillow
 html5lib
 xmltodict
+tld
 
 
 maybe: 

@@ -22,6 +22,7 @@ class VAB_upload:
 
 	def go(self, tagset):
 		# First thing to do, is retrieve a tage list for the image
+		print(tagset)
 		f = open(tagset['local_file'], 'rb')
 		fileToSend	= { 'upload[file]' : f}
 

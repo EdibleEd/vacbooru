@@ -15,37 +15,29 @@ from bs4 import BeautifulSoup
 
 class VAB_QC:
 
-    def __init__(self, config):
+    def __init__(self, config, network):
         self.bannedTags         = []
         self.questionableTags   = ['nude']
         self.explicitTags       = ['sex']
         self.proxies = None
         self.auth = None
-
-    def soupUrlRequest(self, url):
-        r = requests.get(url, proxies=self.proxies, auth=self.auth)
-        if r.status_code == 200:
-            return BeautifulSoup(r.text)
-        else:
-            return None
+        self.network = network
 
     def getPostIDfromMD5(self, imageMD5):
         url = 'http://anubis/posts?utf8=%E2%9C%93&tags=md5%3A' + imageMD5
-        r = self.soupUrlRequest(url)
-        if not r == None:
-            # Some images exist as a direct link
-            # But have had their posts removed
-            res = r.article
-            if not res == None:
-                print('Image is on vacbooru')
-                return res['id'][5:]
-            else:
-                print("Image is not on vacbooru")
-        return 0
+        response, data =  self.network.urlRequest(url, 'html')
+        if response == 200:
+            try:
+                postID = data.article['id'][5:]
+                return 1
+            except:
+                print('Image not uploaded yet')
+                return 0
+        return 1
+
+
 
     def fileCheck(self, tagset):
-        print('=========================================================')
-        #print(tagset)
 
         image = Image.open(tagset['local_file'])
         x = image.size[0]
@@ -53,16 +45,28 @@ class VAB_QC:
         size = os.path.getsize(tagset['local_file'])
         image.close()
 
-        if x < tagset['width'] or y < tagset ['height'] or tagset['flag'] != 1:# or size != int(tagset['file_size']):
+        print(tagset['local_file'], x, tagset['width'], y, tagset['height'], size, tagset['file_size'])
+
+        if (x < tagset['width'] or y < tagset ['height']) and (size != int(tagset['file_size'])):
             # The copy we have is smaller than the one hosted on dbu
             # We want to delete this image, and download the higher res version
-            print('Local file ' + tagset['local_file'] + ' does not correctly match target.')
-            print('Removing old file')
-            os.remove(tagset['local_file'])
+            print('Local file ' + tagset['local_file'] + ' does not correctly match target. Moving old file')
+            #os.remove(tagset['local_file'])
+            
+            a = tagset['local_file'].rfind('\\')
+            newDir = tagset['local_file'][:a] + '\\vab_replacedfiles'
+            try:
+                if not os.path.exists(newDir):
+                    os.makedirs(newDir)
+                print(tagset['local_file'])
+                print(newDir + '\\' + tagset['local_file'][a+1:])
+                os.rename(tagset['local_file'], newDir + '\\' + tagset['local_file'][a+1:])
+            except:
+                print('Moving olf file failed')
 
             print('Downloading larger file')
-            url = tagset['large_loc']
-            target = tagset['target_file']
+            url =       tagset['large_loc']
+            target =    tagset['local_file'] + '0'
             response = requests.get(url, stream=True)
             with open(target, 'wb') as out_file:
                 shutil.copyfileobj(response.raw, out_file)
@@ -93,7 +97,7 @@ class VAB_QC:
                 temp = temp + " copyright:" + tag
 
         tagset['tag_string'] = temp
-        print(tagset)
+
         return tagset    
 
     def safeCheck(self, tagset):
