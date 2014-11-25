@@ -16,6 +16,11 @@ def fileExtension(filepath):
     tokens = filepath.split('.')
     return tokens[-1:][0]
 
+def fileName(filepath):
+    a = filepath.rfind('\\')
+    b = filepath.rfind('.')
+    return filepath[a+1:b]
+
 def sanitizeLoadedConfig(configDict):
 
     data = configDict['Folder']['tumblr_qual'].replace(" ", "")
