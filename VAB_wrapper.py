@@ -30,7 +30,7 @@ class VAB_wrapper:
         auth = {'donmai.us' : {'user': dbu_config['username'], 'api_token' : dbu_config['api_token']},
                 'pixiv.net' : {'username': pxv_config['username'], 'password' : pxv_config['password']}}
         y = VAB_scraper(False, auth, self.network)
-        y.setupTarget(target[0], ['pixiv.net', 'donmai.us'])
+        y.setupTarget(target[0], ['donmai.us', 'pixiv.net'])
         tags = y.scrape()
 
         # try:
@@ -70,12 +70,12 @@ class VAB_wrapper:
             tagged_file = self.scrapeTags([image], scraper_config, network_config, dbu_config, pxv_config)
             if tagged_file == 0:
                 print('File info not found. Ignoring: ' + image)
-            # else:
-                # qc_file = self.QC(tagged_file, upload_config)
-                # if qc_file !=0:
-                #      self.upload(qc_file, upload_config) 
-                # else:
-                #     print('File ' + image + ' failed QC')  
+            else:
+                qc_file = self.QC(tagged_file, upload_config)
+                if qc_file !=0:
+                     self.upload(qc_file, upload_config) 
+                else:
+                    print('File ' + image + ' failed QC')  
 
 
 

@@ -124,8 +124,7 @@ class PixivScraper(AbstractScraper):
             if len(row) > 0:
                 res.append(row[0])
 
-        print(res)
-
+        #print(res)
 
         temp = {}
         temp['id'] = res[0]
@@ -137,9 +136,16 @@ class PixivScraper(AbstractScraper):
             temp['tag_string_artist'] = temp['tag_string_artist_japanese']
         temp['source'] = 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id=' + temp['id']
         temp['md5'] = utl.md5(self.localFile)
-        temp['tag_string_general'] = res[22]
-        temp['tag_string'] = res[22]
+        temp['tag_string_general'] = res[22] + ' tag_me'
+        temp['tag_string'] = res[22] + ' tag_me'
         temp['description'] = res[32]
+        temp['tag_string_character'] = ''
+        temp['tag_string_copyright'] = ''
+        temp['rating'] = 's'
+        if res[44] == '1':
+            temp['rating'] = 'q'
+        elif res[44] == '2':
+            temp['rating'] = 'e'
 
         # These three values are not given.
         # So, set them to -1 to indicate we don't want QC to care
