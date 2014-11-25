@@ -34,6 +34,7 @@ class VAB_scraper:
         self.scrapers   =   {
                                 'donmai.us' : dbuScraper(authConfig['donmai.us'], self.network),
                                 'pixiv.net' : pxvScraper(authConfig['pixiv.net'], self.network),
+
                             }
 
         self.lookup     = []
