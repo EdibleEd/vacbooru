@@ -62,7 +62,7 @@ class VAB_wrapper:
         upload_config   = self.mainConf['Upload']
         network_config  = self.mainConf['Network']
         dbu_config      = self.mainConf['SiteAccess']
-        pxv_config      = self.mainConf['Pixiv.net']
+        pxv_config      = self.mainConf['pixiv']
 
         # Get the file list that we are going to work with
         files = self.loadFolder(folder_config)

@@ -64,6 +64,7 @@ class PixivScraper(AbstractScraper):
             'Authorization': 'Bearer %s' % self.access_token,
             'Cookie': 'PHPSESSID=%s' % self.session,
         }
+        #print(self.session)
 
 
     def setLocalFile(self, target):
@@ -73,15 +74,15 @@ class PixivScraper(AbstractScraper):
         partName = utl.fileName(filename)
 
         header = {
-            'User-Agent': 'pixiv-ios-app(ver4.0.0)'
+            'User-Agent': 'pixiv-ios-app(ver4.0.0)',
         }
         params = {
             'illust_id': partName,
+            'PHPSESSID': self.session
         }
 
         url = 'http://spapi.pixiv.net/iphone/illust.php'
         r = requests.get(url, headers=header, params=params)
-        #print(int(partName))
         if r.status_code == 200 and partName in r.text:
             return partName
         return 0
@@ -99,10 +100,12 @@ class PixivScraper(AbstractScraper):
        
     def generateRawData(self, postID):
         header = {
-            'User-Agent': 'pixiv-ios-app(ver4.0.0)'
+            'User-Agent': 'pixiv-ios-app(ver4.0.0)',
+
         }
         params = {
             'illust_id': postID,
+            'PHPSESSID': self.session
         }
 
         url = 'http://spapi.pixiv.net/iphone/illust.php'
