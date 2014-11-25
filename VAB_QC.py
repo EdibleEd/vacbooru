@@ -47,32 +47,33 @@ class VAB_QC:
 
         print(tagset['local_file'], x, tagset['width'], y, tagset['height'], size, tagset['file_size'])
 
-        if (x < tagset['width'] or y < tagset ['height']) and (size != int(tagset['file_size'])):
-            # The copy we have is smaller than the one hosted on dbu
-            # We want to delete this image, and download the higher res version
-            print('Local file ' + tagset['local_file'] + ' does not correctly match target. Moving old file')
-            #os.remove(tagset['local_file'])
+        if (x < tagset['width'] or y < tagset ['height']) and (size != int(tagset['file_size'])) and(tagset['width'] > 0 and tagset['height'] > 0):
+            print('uo')
+            # # The copy we have is smaller than the one hosted on dbu
+            # # We want to delete this image, and download the higher res version
+            # print('Local file ' + tagset['local_file'] + ' does not correctly match target. Moving old file')
+            # #os.remove(tagset['local_file'])
             
-            a = tagset['local_file'].rfind('\\')
-            newDir = tagset['local_file'][:a] + '\\vab_replacedfiles'
-            try:
-                if not os.path.exists(newDir):
-                    os.makedirs(newDir)
-                print(tagset['local_file'])
-                print(newDir + '\\' + tagset['local_file'][a+1:])
-                os.rename(tagset['local_file'], newDir + '\\' + tagset['local_file'][a+1:])
-            except:
-                print('Moving olf file failed')
+            # a = tagset['local_file'].rfind('\\')
+            # newDir = tagset['local_file'][:a] + '\\vab_replacedfiles'
+            # try:
+            #     if not os.path.exists(newDir):
+            #         os.makedirs(newDir)
+            #     print(tagset['local_file'])
+            #     print(newDir + '\\' + tagset['local_file'][a+1:])
+            #     os.rename(tagset['local_file'], newDir + '\\' + tagset['local_file'][a+1:])
+            # except:
+            #     print('Moving olf file failed')
 
-            print('Downloading larger file')
-            url =       tagset['large_loc']
-            target =    tagset['local_file'] + '0'
-            response = requests.get(url, stream=True)
-            with open(target, 'wb') as out_file:
-                shutil.copyfileobj(response.raw, out_file)
-            del response
-            print('Download of ' + url + ' complete')
-            tagset['local_file'] = tagset['target_file']
+            # print('Downloading larger file')
+            # url =       tagset['large_loc']
+            # target =    tagset['local_file'] + '0'
+            # response = requests.get(url, stream=True)
+            # with open(target, 'wb') as out_file:
+            #     shutil.copyfileobj(response.raw, out_file)
+            # del response
+            # print('Download of ' + url + ' complete')
+            # tagset['local_file'] = tagset['target_file']
         return 1
 
     def tagCheck(self, tagset):

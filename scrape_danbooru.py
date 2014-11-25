@@ -28,7 +28,8 @@ class DanbooruScraper(AbstractScraper):
             	postID = data.article['id'][5:]
             	return postID
             except:
-            	print('Error finding postID for MD5: ' + md5)
+                print('Error finding postID for MD5: ' + md5)
+                return 0
         return 0
 
     def postExists(self, postID):

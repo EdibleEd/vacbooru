@@ -21,6 +21,7 @@
 # import xmltodict
 from Network import Network
 from scrape_danbooru import DanbooruScraper as dbuScraper
+from scrape_pixiv import PixivScraper as pxvScraper
 import Utility as utl
 
 class VAB_scraper:
@@ -32,6 +33,7 @@ class VAB_scraper:
         self.network    = network
         self.scrapers   =   {
                                 'donmai.us' : dbuScraper(authConfig['donmai.us'], self.network),
+                                'pixiv.net' : pxvScraper('a', self.network),
                             }
 
         self.lookup     = []
@@ -51,13 +53,38 @@ class VAB_scraper:
         for service in self.lookup:
             scraper = self.scrapers[service]
             scraper.setLocalFile(self.targetFile)
+            
             postID = scraper.findPostByMD5(md5)
-            if postID != 0:
+
+            #print('a' + str(postID))
+            
+            if postID == 0:
+                postID = scraper.findPostByFileName(self.targetFile)
+            
+            #print('b' + str(postID))
+            
+            if postID != 0 and scraper.postExists(postID):
                 rawData = scraper.generateRawData(postID)
-                tagList = scraper.extractPostInfo(rawData)
-                #print(tagList)
-                return tagList
+                if rawData != 0:
+                    tagList = scraper.extractPostInfo(rawData)
+                    #print(tagList)
+                    return tagList
         return 0
+
+
+# x = Network('a')
+
+# y = PixivScraper('b', x)
+# y.setLocalFile('J:\\pictures\\_culled\\temp\\24382481.jpg')
+# zz = y.findPostByFileName('J:\\pictures\\_culled\\touhou\\24382481.jpg')
+# print(zz)
+# z = y.generateRawData(zz)
+# a = y.extractPostInfo(z)
+
+# print(a)
+
+
+
 
 # class VAB_scraper:
 #     def __init__(self, pervmode, scrapeTarget, network_config, auth_config):

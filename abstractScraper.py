@@ -7,14 +7,19 @@ class AbstractScraper(object):
     def init(self, input):
         """Setup the scraper"""
         return
-
-	@abc.abstractmethod
+    
+    @abc.abstractmethod
     def setLocalFile(self, target):
-    	"""Given an image path, set a local var such that the local_file tag can be applied"""
-    	return        
+        """Given an image path, set a local var such that the local_file tag can be applied"""
+        return        
     
     @abc.abstractmethod
     def findPostByMD5(self, md5):
+        """Given an MD5, return the postID. May not be implemented, depending on the service"""
+        return
+
+    @abc.abstractmethod
+    def findPostByFileName(self, md5):
         """Given an MD5, return the postID. May not be implemented, depending on the service"""
         return
 
