@@ -32,6 +32,23 @@ class DanbooruScraper(AbstractScraper):
                 return 0
         return 0
 
+    def findPostByFileName(self, filename):
+        md5 = utl.fileName(filename)
+        if 'sample' in filename:
+            md5 = md5.replace('sample_', '')
+            md5 = md5.replace('sample-', '')
+        url = self.searchForMD5 + md5
+        response, data =  self.network.urlRequest(url, 'html')
+        if response == 200:
+            data = self.network.htmlEncode(data)
+            try:
+                postID = data.article['id'][5:]
+                return postID
+            except:
+                print('Error finding postID for MD5: ' + md5)
+                return 0
+        return 0
+
     def postExists(self, postID):
         url = self.urlPostBase + str(postID)
         response, data = self.network.urlRequest(url, 'html')
@@ -81,11 +98,18 @@ class DanbooruScraper(AbstractScraper):
             temp['tag_string_general'] = rawData['tag_string_general'] 
         except:
             temp['tag_string_general'] = ''
-        temp['large_loc'] = 'http://danbooru.donmai.us/' + rawData['large_file_url'] 
+
+        t = rawData['large_file_url']
+        # If this is a sample, get the full version
+        if 'sample' in t:
+            a = t.rfind('-')
+            t = 'data/' + t[a+1:]
+
+        temp['large_loc'] = 'http://danbooru.donmai.us/' + t
         temp['local_file'] = self.localFile
         temp['tag_string'] = rawData['tag_string'] 
-        #fin = self.image.rfind('\\')
-        target = 'another temp line' #self.image[:fin] + '\\' + rawData['md5'] + '.' + rawData['file_ext']
+        fin = self.localFile.rfind('\\')
+        target = self.localFile[:fin] + '\\' + rawData['md5'] + '.' + rawData['file_ext']
         temp['target_file'] = target
         # if self.flag:
         #     temp['flag'] = 1

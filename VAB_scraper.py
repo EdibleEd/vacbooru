@@ -54,7 +54,7 @@ class VAB_scraper:
         for service in self.lookup:
             scraper = self.scrapers[service]
             scraper.setLocalFile(self.targetFile)
-            
+            #postID = 0
             postID = scraper.findPostByMD5(md5)
 
             #print('a' + str(postID))

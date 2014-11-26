@@ -66,11 +66,12 @@ class VAB_QC:
 
             print('Downloading larger file')
             url =       tagset['large_loc']
-            target =    tagset['local_file'] + '0'
+            target =    tagset['local_file']
             response = requests.get(url, stream=True)
             with open(target, 'wb') as out_file:
                 shutil.copyfileobj(response.raw, out_file)
             del response
+            os.rename(tagset['local_file'], tagset['target_file'])
             print('Download of ' + url + ' complete')
             tagset['local_file'] = tagset['target_file']
         return 1
