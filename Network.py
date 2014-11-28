@@ -40,7 +40,7 @@ class Network:
 
         #header  = r.headers
         status  = r.status_code
-        # This is blocking. Specifically so.
+
         if target == 'json':
             content = r.json()
         else:
@@ -57,12 +57,3 @@ class Network:
             traceback.print_exc()
             print('HTML encoding error. Skipping file')
             return 0
-
-# x = Network('a')
-# y = ('hi', 'hello')
-# #x.setupAuth('donmai.us', y)
-# z = x.urlRequest('http://danbooru.donmai.us/posts/621008.json', 'json')
-# print(z[0])
-# print(z[1])
-
-#.encode('utf-8')

@@ -160,15 +160,3 @@ class PixivScraper(AbstractScraper):
 
         return temp
 
-
-# x = Network('a')
-
-# y = PixivScraper('b', x)
-# y.setLocalFile('J:\\pictures\\_culled\\temp\\24382481.jpg')
-# zz = y.findPostByFileName('J:\\pictures\\_culled\\touhou\\24382481.jpg')
-# print(zz)
-# z = y.generateRawData(zz)
-# a = y.extractPostInfo(z)
-
-# print(a)
-
