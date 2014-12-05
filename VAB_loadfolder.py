@@ -39,7 +39,7 @@ class VAB_loadfolder:
                 print("Folder not found " + path)
 
         for root, dirs, files in os.walk(path_to_file):
-            if "vab_successfulupload" not in root and "vab_replacedfiles" not in root:
+            if "vab_successfulupload" not in root and "vab_replacedfiles" not in root and "vab_duplicateupload" not in root:
                 for name in files:
                     if (mode == "regex"):
                         if self.onlyRegex(name, regex):

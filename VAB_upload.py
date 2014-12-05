@@ -32,7 +32,23 @@ class VAB_upload:
 		#print(fff)
 		r = requests.post('http://anubis/uploads.json', files=fileToSend, data=fff, auth=HTTPBasicAuth(self.user, self.api_token), verify=False)
 		f.close()
-		print(r.text)
+		
+		if('RuntimeError - duplicate' in r.text):
+			print("Duplicate file attempt")
+			a = tagset['local_file'].rfind('\\')
+			newDir = tagset['local_file'][:a] + '\\vab_duplicateupload'
+			try:
+				if not os.path.exists(newDir):
+					os.makedirs(newDir)
+				print(tagset['local_file'])
+				print(newDir + '\\' + tagset['local_file'][a+1:])
+				os.rename(tagset['local_file'], newDir + '\\' + tagset['local_file'][a+1:])
+			except:
+				print('File ' + tagset['local_file'][a+1:] + ' could not be moved')
+				print("Error:", sys.exc_info()[0])
+			return
+		else:
+			print(r.text)
 
 		# Now that we have uploaded it, lets move it to a new location, so we don't reupload it later
 		a = tagset['local_file'].rfind('\\')

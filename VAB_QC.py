@@ -104,7 +104,11 @@ class VAB_QC:
 
         temp = ' '.join(tagList)
 
-        print(temp)
+        try:
+            print(temp)
+        except:
+            print('Encoding error')
+            return 0
 
         tagset['tag_string'] = temp
 
