@@ -1,3 +1,5 @@
+# coding= utf-8
+
 # A series of quality checking steps
 # All do not alter the format of the data
 # Steps projected are as follows:
